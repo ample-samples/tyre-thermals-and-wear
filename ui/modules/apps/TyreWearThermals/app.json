@@ -1,0 +1,23 @@
+{
+  "domElement": "<tyre-wear-thermals></tyre-wear-thermals>",
+  "name": "Tyre Wear and Thermals",
+  "types": [
+    "ui.apps.categories.debug",
+    "ui.apps.categories.vehicle_info",
+    "ui.apps.categories.info",
+    "ui.apps.categories.racing"
+  ],
+  "description": "TODO",
+  "css": {
+    "left": "0px",
+    "height": "220px",
+    "width": "165px",
+    "min-width": "160px",
+    "min-height": "120px",
+    "top": "0px",
+    "border-radius": "15px"
+  },
+  "author": "lucky4luuk",
+  "version": "0.1",
+  "directive": "tyreWearThermals"
+}
