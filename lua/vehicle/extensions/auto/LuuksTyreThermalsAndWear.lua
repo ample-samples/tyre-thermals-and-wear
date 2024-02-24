@@ -238,7 +238,9 @@ local function CalculateTyreGrip(wheelID, loadBias, treadCoef)
     tyreGrip = tyreGrip * (math.min(data.condition / 97, 1) ^ 3.5 * 0.22 + 0.78)
     -- Grip of tyres with high treadCoef are affected more by temperature change
     local tempDist = math.abs(avgTemp - data.working_temp) ^ treadCoef
-    local tempLerpValue = (tempDist / data.working_temp) ^ 0.1
+    -- Insane calculation to make temps forgiving when around ideal temperature 
+    -- but linear between 10 and 25 degrees from ideal
+    local tempLerpValue = -1 / ((1 + 0.0001 * (-2 + (0.6 * tempDist - 2)^2)^2)) +1
     tempLerpValue = -1 / (1 + 5 * tempDist ^ 2) + 1
     tyreGrip = tyreGrip * lerp(1, 0.9, tempLerpValue)
 
