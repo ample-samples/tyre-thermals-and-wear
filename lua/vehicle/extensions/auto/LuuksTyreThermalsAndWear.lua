@@ -17,7 +17,9 @@ local TEMP_CHANGE_RATE_SKIN_FROM_CORE = 0.2 -- Modifier for how fast skin temper
 
 local TEMP_CHANGE_RATE_CORE = 0.005      -- Global modifier for how fast the core temperature changes
 local TEMP_GAIN_RATE_CORE = 24                -- Modifier for how fast core temperature rises from brake temp
-local CORE_TEMP_COOL_RATE = 0.5               -- Modifier for how fast core temperature cools down from air
+local CORE_TEMP_VEL_COOL_RATE = 0.5               -- Modifier for how fast core temperature cools down from moving air
+local CORE_TEMP_COOL_RATE = 0.7               -- Modifier for how fast core temperature cools down from static air/IR radiation
+
 
 local WEAR_RATE = 0.1
 
@@ -162,7 +164,7 @@ end
 
 -- Calculate tyre wear and thermals based on tyre data
 local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipEnergy, propulsionTorque, brakeTorque,
-                              load, angularVel, brakeTemp, tyreWidth)
+                              load, angularVel, brakeTemp, tyreWidth, airspeed)
     -- adjust for lower weight cars which generate less force
     load = ((400 + load) * load / (100 + load) - 0.15 * load)
     -- local STARTING_TEMP = ENV_TEMP + 10
@@ -182,26 +184,22 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
     local data = tyreData[wheelID] or defaultTyreData
 
     local tyreWidthCoeff = (3.5 * tyreWidth) * 0.5 + 0.5
-    print("wheelID " .. wheelID)
-    print("load " .. load)
 
     local netTorqueEnergy = math.abs(propulsionTorque * 0.005 - brakeTorque * 0.015) * TORQUE_ENERGY_MULTIPLIER
 
     local weights = CalcBiasWeights(loadBias)
     local avgTemp = TempRingsToAvgTemp(data.temp, loadBias)
 
-    -- print("load " .. load)
     for i = 1, 3 do
         local loadCoeffIndividual = weights[i] * load
-        -- print("loadCoeffIndividual " .. loadCoeffIndividual)
         local tempGain = (slipEnergy * 0.3 + netTorqueEnergy * 0.05 + 0.00005 * angularVel) *
             TEMP_GAIN_RATE * dt
         local tempDist = math.abs(data.temp[i] - data.working_temp)
         local tempLerpValue = (tempDist / data.working_temp) ^ 0.8
         tempGain = lerp(tempGain, 0, tempLerpValue) * 0.9
         tempGain = tempGain * (math.max(groundModel.staticFrictionCoefficient - 0.5, 0.1) * 2)
-        -- Temp gain from wheelspin
-        + (0.0004 * slipEnergy * loadCoeffIndividual)
+        -- Temp gain from wheelspin / lockup
+        + (0.001 * slipEnergy * loadCoeffIndividual)
         -- Temp gain from work done in corner
         + (0.01 / (1 + slipEnergy^2))
 
@@ -220,7 +218,7 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
     local avgSkin = (data.temp[1] + data.temp[2] + data.temp[3]) / 3
     local coreTempDiffSkin = (avgSkin - data.temp[4]) * TEMP_CHANGE_RATE_CORE * dt
     local coreTempDiffBrake = (0.3 * brakeTemp - data.temp[4]) * TEMP_CHANGE_RATE_CORE * dt * TEMP_GAIN_RATE_CORE
-    local coreTempCooling = (data.temp[4] - ENV_TEMP) * dt * 0.05 * TEMP_CHANGE_RATE_CORE * CORE_TEMP_COOL_RATE
+    local coreTempCooling =  (0.05 * CORE_TEMP_VEL_COOL_RATE * airspeed + 0.05 * CORE_TEMP_COOL_RATE) * dt * TEMP_CHANGE_RATE_CORE * (data.temp[4] - ENV_TEMP)
     data.temp[4] = data.temp[4] + coreTempDiffSkin + coreTempDiffBrake - coreTempCooling
 
     local thermalCoeff = (math.abs(avgTemp - data.working_temp) / data.working_temp) ^ 0.8
@@ -298,6 +296,8 @@ local function updateGFX(dt)
     -- We don't use this system for front-back load, because we can simply guess this
     -- based on individual tyre load!
 
+    local vehicleAirspeed = electrics.values.airflowspeed
+
     for i = 0, #wheels.wheelRotators do
         local wheel = obj:getWheel(i)
         if wheel then
@@ -327,7 +327,7 @@ local function updateGFX(dt)
             loadBias = sigmoid(loadBias, 50) * 2 - 1
 
             RecalcTyreWear(dt, i, groundModel, loadBias, treadCoef, slipEnergy, propulsionTorque, brakeTorque, load,
-                angularVel, brakeTemp, wheelCache[i].width)
+                angularVel, brakeTemp, wheelCache[i].width, vehicleAirspeed)
 
 
             local tyreGrip = CalculateTyreGrip(i, loadBias, treadCoef)
