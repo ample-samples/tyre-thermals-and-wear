@@ -8,14 +8,14 @@ local OPTIMAL_PRESSURE = 158000               -- In pascal (23 psi)
 local WORKING_TEMP = 85                       -- The "perfect" working temperature for your tyres
 local ENV_TEMP = 21                           -- In celsius. Represents both the outside air and surface temp in 1 variable.
 
-local TEMP_CHANGE_RATE = 0.30                 -- Global modifier for how fast skin temperature changes
-local TEMP_GAIN_RATE = 0.2                    -- Modifier for how fast temperature rises from wheel slip and load
-local TEMP_COOL_RATE = 2.05                   -- Modifier for how fast temperature cools down related to ENV_TEMP
-local TEMP_COOL_VEL_RATE = 0.9                -- Modifier for how much velocity influences cooling
+local TEMP_CHANGE_RATE = 2.80                 -- Global modifier for how fast skin temperature changes
+local TEMP_GAIN_RATE = 0.8                    -- Modifier for how fast temperature rises from wheel slip and load
+local TEMP_COOL_RATE = 0.15                   -- Modifier for how fast temperature cools down related to ENV_TEMP
+local TEMP_COOL_VEL_RATE = 0.15                -- Modifier for how much velocity influences cooling skin
 
-local TEMP_CHANGE_RATE_SKIN_FROM_CORE = 0.2 -- Modifier for how fast skin temperature changes from core
+local TEMP_CHANGE_RATE_SKIN_FROM_CORE = 0.04 -- Modifier for how fast skin temperature changes from core
 
-local TEMP_CHANGE_RATE_CORE = 0.005      -- Global modifier for how fast the core temperature changes
+local TEMP_CHANGE_RATE_CORE = 0.005      -- Modifier for how fast the core temperature changes 
 local TEMP_GAIN_RATE_CORE = 24                -- Modifier for how fast core temperature rises from brake temp
 local CORE_TEMP_VEL_COOL_RATE = 0.5               -- Modifier for how fast core temperature cools down from moving air
 local CORE_TEMP_COOL_RATE = 0.7               -- Modifier for how fast core temperature cools down from static air/IR radiation
@@ -36,96 +36,10 @@ local totalTimeMod60 = 0
 -- - Tyre pressure heavily affects the thermals and wear (mostly thermals I think).
 -- - Brake temperature influences tyre thermals a decent amount as well.
 
-function print_table(node)
-    -- to make output beautiful
-    local function tab(amt)
-        local str = ""
-        for i = 1, amt do
-            str = str .. "\t"
-        end
-        return str
-    end
-
-    local cache, stack, output = {}, {}, {}
-    local depth = 1
-    local output_str = "{\n"
-
-    while true do
-        local size = 0
-        for k, v in pairs(node) do
-            size = size + 1
-        end
-
-        local cur_index = 1
-        for k, v in pairs(node) do
-            if (cache[node] == nil) or (cur_index >= cache[node]) then
-                if (string.find(output_str, "}", output_str:len())) then
-                    output_str = output_str .. ",\n"
-                elseif not (string.find(output_str, "\n", output_str:len())) then
-                    output_str = output_str .. "\n"
-                end
-
-                -- This is necessary for working with HUGE tables otherwise we run out of memory using concat on huge strings
-                table.insert(output, output_str)
-                output_str = ""
-
-                local key
-                if (type(k) == "number" or type(k) == "boolean") then
-                    key = "[" .. tostring(k) .. "]"
-                else
-                    key = "['" .. tostring(k) .. "']"
-                end
-
-                if (type(v) == "number" or type(v) == "boolean") then
-                    output_str = output_str .. tab(depth) .. key .. " = " .. tostring(v)
-                elseif (type(v) == "table") then
-                    output_str = output_str .. tab(depth) .. key .. " = {\n"
-                    table.insert(stack, node)
-                    table.insert(stack, v)
-                    cache[node] = cur_index + 1
-                    break
-                else
-                    output_str = output_str .. tab(depth) .. key .. " = '" .. tostring(v) .. "'"
-                end
-
-                if (cur_index == size) then
-                    output_str = output_str .. "\n" .. tab(depth - 1) .. "}"
-                else
-                    output_str = output_str .. ","
-                end
-            else
-                -- close the table
-                if (cur_index == size) then
-                    output_str = output_str .. "\n" .. tab(depth - 1) .. "}"
-                end
-            end
-
-            cur_index = cur_index + 1
-        end
-
-        if (#stack > 0) then
-            node = stack[#stack]
-            stack[#stack] = nil
-            depth = cache[node] == nil and depth + 1 or depth - 1
-        else
-            break
-        end
-    end
-
-    -- This is necessary for working with HUGE tables otherwise we run out of memory using concat on huge strings
-
-    table.insert(output, output_str)
-    output_str = table.concat(output)
-
-    print(output_str)
-end
-
 local function sigmoid(x, k)
     local k = k or 10
     return 1 / (1 + k ^ -x)
 end
-
-
 
 local function lerp(a, b, t)
     return a + (b - a) * t
@@ -185,24 +99,24 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
 
     local tyreWidthCoeff = (3.5 * tyreWidth) * 0.5 + 0.5
 
-    local netTorqueEnergy = math.abs(propulsionTorque * 0.005 - brakeTorque * 0.015) * TORQUE_ENERGY_MULTIPLIER
+    local netTorqueEnergy = math.abs(propulsionTorque * 0.015 - brakeTorque * 0.015) * TORQUE_ENERGY_MULTIPLIER
 
     local weights = CalcBiasWeights(loadBias)
     local avgTemp = TempRingsToAvgTemp(data.temp, loadBias)
 
     for i = 1, 3 do
         local loadCoeffIndividual = weights[i] * load
-        local tempGain = (slipEnergy * 0.3 + netTorqueEnergy * 0.05 + 0.00005 * angularVel) *
-            TEMP_GAIN_RATE * dt
         local tempDist = math.abs(data.temp[i] - data.working_temp)
         local tempLerpValue = (tempDist / data.working_temp) ^ 0.8
+
+        local tempGain = (slipEnergy * 0.3 + netTorqueEnergy * 0.05 + 0.00005 * angularVel)
         tempGain = lerp(tempGain, 0, tempLerpValue) * 0.9
         tempGain = tempGain * (math.max(groundModel.staticFrictionCoefficient - 0.5, 0.1) * 2)
         -- Temp gain from wheelspin / lockup
         + (0.001 * slipEnergy * loadCoeffIndividual)
         -- Temp gain from work done in corner
         + (0.01 / (1 + slipEnergy^2))
-
+        tempGain = tempGain * TEMP_GAIN_RATE * dt
         local tempCoolingRate = (data.temp[i] - ENV_TEMP) * dt * 0.05 * TEMP_COOL_RATE
         local coolVelCoeff = TEMP_COOL_VEL_RATE *
             math.max(((angularVel / math.max(slipEnergy, 0.001)) * 0.00055) ^ 0.75 * 0.84, 1)
@@ -216,10 +130,11 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
 
     -- Calculating temperature change of the core
     local avgSkin = (data.temp[1] + data.temp[2] + data.temp[3]) / 3
-    local coreTempDiffSkin = (avgSkin - data.temp[4]) * TEMP_CHANGE_RATE_CORE * dt
-    local coreTempDiffBrake = (0.3 * brakeTemp - data.temp[4]) * TEMP_CHANGE_RATE_CORE * dt * TEMP_GAIN_RATE_CORE
-    local coreTempCooling =  (0.05 * CORE_TEMP_VEL_COOL_RATE * airspeed + 0.05 * CORE_TEMP_COOL_RATE) * dt * TEMP_CHANGE_RATE_CORE * (data.temp[4] - ENV_TEMP)
-    data.temp[4] = data.temp[4] + coreTempDiffSkin + coreTempDiffBrake - coreTempCooling
+    local coreTempDiffSkin = (avgSkin - data.temp[4]) * dt
+    local coreTempDiffBrake = (0.0003 * (brakeTemp - data.temp[4])) * dt * TEMP_GAIN_RATE_CORE
+    local coreTempCooling = (data.temp[4] - ENV_TEMP) * (0.05 * CORE_TEMP_VEL_COOL_RATE * airspeed + 0.05 * CORE_TEMP_COOL_RATE) * dt
+    data.temp[4] = data.temp[4] + (coreTempDiffSkin + coreTempDiffBrake - coreTempCooling) * TEMP_CHANGE_RATE_CORE
+    -- print("braketemp " .. brakeTemp)
 
     local thermalCoeff = (math.abs(avgTemp - data.working_temp) / data.working_temp) ^ 0.8
     local wear = (slipEnergy * 0.75 + netTorqueEnergy * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
@@ -252,9 +167,6 @@ end
 local function updateGFX(dt)
     local stream = { data = {} }
 
-    local vectorForward = obj:getDirectionVector()
-    local vectorUp = obj:getDirectionVectorUp()
-    local vectorRight = vectorForward:cross(vectorUp)
 
     -- print("===start===")
     -- for key, value in pairs(wheels.wheelRotators[0]) do
@@ -287,10 +199,23 @@ local function updateGFX(dt)
 
         -- Get camber/toe/caster data
         -- TODO: Get this relative to the track angle? Banked turns kinda mess up now I think
-        w.camber = (90 - math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, vectorUp, vectorRight))))
+
+
+        local vectorForward = obj:getDirectionVector()
+        local surfaceNormal = mapmgr.surfaceNormalBelow(obj:getPosition() + obj:getNodePosition(wd.node2), wd.radius)
+        local vectorRight = vectorForward:cross(surfaceNormal)
+        w.camber = (90 - math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, surfaceNormal, vectorRight))))
+        -- print("w.name " .. w.name)
+        -- print("w.camber " .. w.camber)
 
         wheelCache[i] = w
+
     end
+
+    -- for key, value in pairs(obj) do
+    --     print("===" .. key .. "===")
+    -- end
+    -- print("===end===")
 
     -- Based on sensor data, we can estimate how far the load is shifted left-right on the tyre
     local loadBiasSide = sensors.gx2 / 5

@@ -77,8 +77,8 @@ angular.module("beamng.apps")
                     // Draw info text
                     ctx.fillStyle = "#ffffffff";
                     ctx.font = 'bold 18pt "Lucida Console", Monaco, monospace';
-                    ctx.fillText("" + Math.ceil(condition) + "%", cx, y - 8);
-                    // ctx.fillText("" + Math.ceil(temps[3]) + " C", cx, y - 8);
+                    // ctx.fillText("" + Math.ceil(condition) + "%", cx, y - 8);
+                    ctx.fillText("" + Math.ceil(temps[3]) + " C", cx, y - 8);
 
                     var t = condition / 100;
 
