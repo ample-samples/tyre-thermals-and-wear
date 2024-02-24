@@ -4,23 +4,24 @@ beamstate = require("beamstate")
 
 local M = {}
 
-local OPTIMAL_PRESSURE = 158000 -- In pascal (23 psi)
-local WORKING_TEMP = 85         -- The "perfect" working temperature for your tyres
-local ENV_TEMP = 21             -- In celsius. Represents both the outside air and surface temp in 1 variable.
+local OPTIMAL_PRESSURE = 158000               -- In pascal (23 psi)
+local WORKING_TEMP = 85                       -- The "perfect" working temperature for your tyres
+local ENV_TEMP = 21                           -- In celsius. Represents both the outside air and surface temp in 1 variable.
 
-local TEMP_CHANGE_RATE = 0.2    -- Global modifier for how fast temperature changes
-local TEMP_GAIN_RATE = 0.85     -- Modifier for how fast temperature rises from wheel slip
-local TEMP_COOL_RATE = 1.65     -- Modifier for how fast temperature cools down related to ENV_TEMP
+local TEMP_CHANGE_RATE = 0.30                 -- Global modifier for how fast skin temperature changes
+local TEMP_GAIN_RATE = 0.2                    -- Modifier for how fast temperature rises from wheel slip and load
+local TEMP_COOL_RATE = 2.05                   -- Modifier for how fast temperature cools down related to ENV_TEMP
+local TEMP_COOL_VEL_RATE = 0.9                -- Modifier for how much velocity influences cooling
 
-local TEMP_CHANGE_RATE_SKIN_FROM_CORE = 0.3
+local TEMP_CHANGE_RATE_SKIN_FROM_CORE = 0.2 -- Modifier for how fast skin temperature changes from core
 
-local TEMP_CHANGE_RATE_CORE = 0.09 -- Global modifier for how fast the core temperature changes
-local TEMP_GAIN_RATE_CORE = 0.03   -- Modifier for how fast core temperature rises from brake temp
-local TEMP_COOL_RATE_CORE = 0.5    -- Modifier for how fast core temperature cools down related to skin temperature
+local TEMP_CHANGE_RATE_CORE = 0.005      -- Global modifier for how fast the core temperature changes
+local TEMP_GAIN_RATE_CORE = 24                -- Modifier for how fast core temperature rises from brake temp
+local CORE_TEMP_COOL_RATE = 0.5               -- Modifier for how fast core temperature cools down from air
 
-local WEAR_RATE = 0.025
+local WEAR_RATE = 0.1
 
-local TORQUE_ENERGY_MULTIPLIER = 0.075
+local TORQUE_ENERGY_MULTIPLIER = 0.12
 
 local tyreData = {}
 local wheelCache = {}
@@ -141,9 +142,9 @@ local function CalcBiasWeights(loadBias)
     -- tyreStiffnessFactor controls how evenly the tyre supports weight as camber changes.
     -- Higher is more support and less even support
     local tyreStiffnessFactor = 0.25
-    local weightCenter = -1 / (1 + 1 * (loadBias ^ -2)) + 1
-    local weightLeft = -0.8 * loadBias + 1
-    local weightRight = 0.8 * loadBias + 1
+    local weightCenter = -1 / (1 + 5 * (loadBias ^ -2)) + 1
+    local weightLeft = -0.4 * loadBias + 1
+    local weightRight = 0.4 * loadBias + 1
 
     local weightSum = weightLeft + weightCenter + weightRight
     local leftNormalise = weightLeft / weightSum
@@ -162,6 +163,8 @@ end
 -- Calculate tyre wear and thermals based on tyre data
 local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipEnergy, propulsionTorque, brakeTorque,
                               load, angularVel, brakeTemp, tyreWidth)
+    -- adjust for lower weight cars which generate less force
+    load = ((400 + load) * load / (100 + load) - 0.15 * load)
     -- local STARTING_TEMP = ENV_TEMP + 10
     local default_working_temp = WORKING_TEMP * treadCoef
     local starting_temp
@@ -179,47 +182,52 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
     local data = tyreData[wheelID] or defaultTyreData
 
     local tyreWidthCoeff = (3.5 * tyreWidth) * 0.5 + 0.5
-    local loadCoeff = math.max(load, 0) / 630 / tyreWidthCoeff
-    local torqueEnergy = math.abs(propulsionTorque * 0.015 + brakeTorque * 0.012) * TORQUE_ENERGY_MULTIPLIER
+    print("wheelID " .. wheelID)
+    print("load " .. load)
+
+    local netTorqueEnergy = math.abs(propulsionTorque * 0.005 - brakeTorque * 0.015) * TORQUE_ENERGY_MULTIPLIER
 
     local weights = CalcBiasWeights(loadBias)
-    -- if wheelID == 1 then
-    --     print(loadBias)
-    --     print(weights[1] .. " " .. weights[2] .. " " .. weights[3])
-    -- end
-
     local avgTemp = TempRingsToAvgTemp(data.temp, loadBias)
 
+    -- print("load " .. load)
     for i = 1, 3 do
-        local loadCoeffIndividual = loadCoeff * weights[i]
-        local tempGain = (slipEnergy * 0.80 + torqueEnergy * 0.08 + angularVel * 0.105) * TEMP_CHANGE_RATE *
+        local loadCoeffIndividual = weights[i] * load
+        -- print("loadCoeffIndividual " .. loadCoeffIndividual)
+        local tempGain = (slipEnergy * 0.3 + netTorqueEnergy * 0.05 + 0.00005 * angularVel) *
             TEMP_GAIN_RATE * dt
         local tempDist = math.abs(data.temp[i] - data.working_temp)
         local tempLerpValue = (tempDist / data.working_temp) ^ 0.8
-        tempGain = lerp(tempGain, tempGain * 0.5, tempLerpValue) * loadCoeffIndividual * 0.9
-        tempGain = tempGain * (math.max(groundModel.staticFrictionCoefficient - 0.5, 0.1) * 2) +
-            (0.000125 * slipEnergy ^ 2 * loadCoeffIndividual)
+        tempGain = lerp(tempGain, 0, tempLerpValue) * 0.9
+        tempGain = tempGain * (math.max(groundModel.staticFrictionCoefficient - 0.5, 0.1) * 2)
+        -- Temp gain from wheelspin
+        + (0.0004 * slipEnergy * loadCoeffIndividual)
+        -- Temp gain from work done in corner
+        + (0.01 / (1 + slipEnergy^2))
 
-        local tempCoolingRate = (data.temp[i] - ENV_TEMP) * TEMP_CHANGE_RATE * dt * 0.05 * TEMP_COOL_RATE
-        local coolVelCoeff = 1.25 * math.max(((angularVel / math.max(slipEnergy, 0.001)) * 0.00055) ^ 0.75 * 0.84, 1)
+        local tempCoolingRate = (data.temp[i] - ENV_TEMP) * dt * 0.05 * TEMP_COOL_RATE
+        local coolVelCoeff = TEMP_COOL_VEL_RATE *
+            math.max(((angularVel / math.max(slipEnergy, 0.001)) * 0.00055) ^ 0.75 * 0.84, 1)
         local skinTempDiffCore = (data.temp[4] - avgTemp) * TEMP_CHANGE_RATE_SKIN_FROM_CORE * dt
 
-        local tempDiff = (avgTemp - data.temp[i]) * TEMP_CHANGE_RATE * dt
+        local tempDiff = (avgTemp - data.temp[i]) * dt
 
-        data.temp[i] = data.temp[i] + tempGain - tempCoolingRate * coolVelCoeff + tempDiff + skinTempDiffCore
+        data.temp[i] = data.temp[i] +
+            (tempGain - tempCoolingRate * coolVelCoeff + tempDiff + skinTempDiffCore) * TEMP_CHANGE_RATE / tyreWidthCoeff
     end
 
     -- Calculating temperature change of the core
     local avgSkin = (data.temp[1] + data.temp[2] + data.temp[3]) / 3
-    local tempCoolingRate = (data.temp[4] - avgSkin) * TEMP_CHANGE_RATE_CORE * dt * TEMP_COOL_RATE_CORE
     local coreTempDiffSkin = (avgSkin - data.temp[4]) * TEMP_CHANGE_RATE_CORE * dt
-    local coreTempDiffBrake = (brakeTemp - data.temp[4]) * TEMP_CHANGE_RATE_CORE * dt * TEMP_GAIN_RATE_CORE
-    data.temp[4] = data.temp[4] - tempCoolingRate + coreTempDiffSkin + coreTempDiffBrake
+    local coreTempDiffBrake = (0.3 * brakeTemp - data.temp[4]) * TEMP_CHANGE_RATE_CORE * dt * TEMP_GAIN_RATE_CORE
+    local coreTempCooling = (data.temp[4] - ENV_TEMP) * dt * 0.05 * TEMP_CHANGE_RATE_CORE * CORE_TEMP_COOL_RATE
+    data.temp[4] = data.temp[4] + coreTempDiffSkin + coreTempDiffBrake - coreTempCooling
 
     local thermalCoeff = (math.abs(avgTemp - data.working_temp) / data.working_temp) ^ 0.8
-    local wear = (slipEnergy * 0.75 + torqueEnergy * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
+    local wear = (slipEnergy * 0.75 + netTorqueEnergy * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
         math.max(thermalCoeff, 0.75) * groundModel.staticFrictionCoefficient
     data.condition = math.max(data.condition - wear, 0)
+    data.condition = 100
     tyreData[wheelID] = data
 end
 
@@ -231,9 +239,10 @@ local function CalculateTyreGrip(wheelID, loadBias, treadCoef)
     local tyreGrip = 1
     tyreGrip = tyreGrip * (math.min(data.condition / 97, 1) ^ 3.5 * 0.22 + 0.78)
     -- Grip of tyres with high treadCoef are affected more by temperature change
-    local tempDist = math.abs(avgTemp - data.working_temp)^treadCoef
+    local tempDist = math.abs(avgTemp - data.working_temp) ^ treadCoef
     local tempLerpValue = (tempDist / data.working_temp) ^ 0.1
-    tyreGrip = tyreGrip * lerp(1, 0.82, tempLerpValue * treadCoef)
+    tempLerpValue = -1 / (1 + 5 * tempDist ^ 2) + 1
+    tyreGrip = tyreGrip * lerp(1, 0.9, tempLerpValue)
 
     return tyreGrip
 end
@@ -248,23 +257,11 @@ local function updateGFX(dt)
     local vectorRight = vectorForward:cross(vectorUp)
 
     -- print("===start===")
-    -- for key, value in pairs(scenario) do
+    -- for key, value in pairs(wheels.wheelRotators[0]) do
     --     print("===" .. key .. "===")
-    --     print(value())
+    --     print(value)
     -- end
-    -- print_table(wheelData)
-
-    -- print_table(v.data.powertrain)
-    -- for k, v in pairs(partmgmt.getConfig().parts) do
-    --     print(k, v)
-    -- end
-
-    -- for i = 45, 50, 1 do
-    --     print("=== " .. i .. " ===")
-    --     print(v.data.props[i])
-    --     print_table(v.data.props[i])
-    -- end
-    -- print("===end===\n\n\n\n")
+    -- print(wheels.wheelRotators[0].downForceRaw)
 
     for i, wd in pairs(wheels.wheelRotators) do
         local w = wheelCache[i] or {}
@@ -285,9 +282,9 @@ local function updateGFX(dt)
         w.softnessCoef = wd.softnessCoef
         w.isBroken = wd.isBroken
         w.isTireDeflated = wd.isTireDeflated
+        w.downForceRaw = wd.downForceRaw
         w.brakeCoreTemperature = wd.brakeCoreTemperature or ENV_TEMP -- Fixes AI
 
-        -- print(w.name .. w.lastSlip)
         -- Get camber/toe/caster data
         -- TODO: Get this relative to the track angle? Banked turns kinda mess up now I think
         w.camber = (90 - math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, vectorUp, vectorRight))))
@@ -312,12 +309,16 @@ local function updateGFX(dt)
             local angularVel = math.max(math.abs(wheelCache[i].angularVelocity), obj:getVelocity():length() * 3) * 0.1 *
                 (math.max(groundModel.staticFrictionCoefficient - 0.5, 0.1) * 2) ^ 3
             angularVel = math.floor(angularVel * 10) / 10 -- Round to reduce small issues
-            local slipEnergy = wheelCache[i].lastSlip * staticFrictionCoefficient * 1.25
+            -- maximum grip occurs between lastSlip 1-3
+            -- Sliding when lastSlip > 4
+            local slipEnergy = wheelCache[i].lastSlip * staticFrictionCoefficient * 0.05
             -- Multiply with wheel direction to flip the torque for right side wheels
             local velCoeff = math.min(angularVel / math.max(slipEnergy, 0.001), 1)
-            local propulsionTorque = wheelCache[i].propulsionTorque * wheelCache[i].wheelDir * velCoeff
-            local brakeTorque = wheelCache[i].brakingTorque * wheelCache[i].wheelDir * velCoeff
-            local load = wheelCache[i].downForce * velCoeff
+            local propulsionTorque = wheelCache[i].propulsionTorque * wheelCache[i].wheelDir
+            local brakeTorque = wheelCache[i].brakingTorque * wheelCache[i].wheelDir
+            local deformationEnergy = wheelCache[i].downForce * velCoeff
+            local load = wheelCache[i].downForceRaw
+            -- Brake temp is measured in degrees C, not F
             local brakeTemp = wheelCache[i].brakeCoreTemperature
 
             local treadCoef = 1.0 - wheelCache[i].treadCoef * 0.45
@@ -371,7 +372,6 @@ local function updateGFX(dt)
     totalTimeMod60 = (totalTimeMod60 + dt) % 60 -- Loops every 60 seconds
     stream.total_time_mod_60 = totalTimeMod60
     gui.send("TyreWearThermals", stream)
-    -- print_table(beamstate.getVehicleState())
 end
 
 local function onReset()
