@@ -207,14 +207,17 @@ local function updateGFX(dt)
         -- TODO: Get this relative to the track angle? Banked turns kinda mess up now I think
 
 
-print("node1 " .. wd.node1)
-print("node2 " .. wd.node2)
-        local surfaceNormal = mapmgr.surfaceNormalBelow(obj:getPosition() + (obj:getNodePosition(wd.node2) + obj:getNodePosition(wd.node1)) / 2 - wd.radius*vectorUp:normalized(), wd.tireWidth / 1.7)
-        local vectorRight = vectorForward:cross(surfaceNormal)
-        w.camber = (90 - math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, surfaceNormal, vectorRight)) - math.asin(roll * wd.wheelDir)))
-        -- print("wname " .. w.name)
-        -- print("camber " .. w.camber)
+        local surfaceNormal = mapmgr.surfaceNormalBelow(obj:getPosition() + obj:getNodePosition(wd.node2) - wd.radius*vectorUp:normalized(), 0.1)
+        local vectorRight = vectorForward:cross(vectorUp)
+        w.camber = (90 - (math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, surfaceNormal, vectorRight)) - math.asin(roll) * wd.wheelDir)))
+        if w.name == "FL" then
+        print("wname " .. w.name)
+        print("camber " .. w.camber)
+        dump(math.asin(roll) * wd.wheelDir)
+        -- TODO: Investigate why this value changes suddenly on banked track
+        dump(90 - math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, surfaceNormal, vectorRight))))
 
+        end
         wheelCache[i] = w
 
     end
