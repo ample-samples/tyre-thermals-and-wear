@@ -9,9 +9,10 @@ local WORKING_TEMP = 85                       -- The "perfect" working temperatu
 local ENV_TEMP = 21                           -- In celsius. Represents both the outside air and surface temp in 1 variable.
 
 local TEMP_CHANGE_RATE = 2.80                 -- Global modifier for how fast skin temperature changes
-local TEMP_GAIN_RATE = 0.8                    -- Modifier for how fast temperature rises from wheel slip and load
+local TEMP_GAIN_RATE = 1.2                    -- Modifier for how fast temperature rises from wheel slip and load
 local TEMP_COOL_RATE = 0.15                   -- Modifier for how fast temperature cools down related to ENV_TEMP
 local TEMP_COOL_VEL_RATE = 0.15                -- Modifier for how much velocity influences cooling skin
+local DEFORMATION_ENERGY_MULTIPLIER = 0.5
 
 local TEMP_CHANGE_RATE_SKIN_FROM_CORE = 0.04 -- Modifier for how fast skin temperature changes from core
 
@@ -78,7 +79,7 @@ end
 
 -- Calculate tyre wear and thermals based on tyre data
 local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipEnergy, propulsionTorque, brakeTorque,
-                              load, angularVel, brakeTemp, tyreWidth, airspeed)
+                              load, angularVel, brakeTemp, tyreWidth, airspeed, deformationEnergy)
     -- adjust for lower weight cars which generate less force
     load = ((400 + load) * load / (100 + load) - 0.15 * load)
     -- local STARTING_TEMP = ENV_TEMP + 10
@@ -99,7 +100,7 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
 
     local tyreWidthCoeff = (3.5 * tyreWidth) * 0.5 + 0.5
 
-    local netTorqueEnergy = math.abs(propulsionTorque * 0.015 - brakeTorque * 0.015) * TORQUE_ENERGY_MULTIPLIER
+    local netTorqueEnergy = math.abs(propulsionTorque * 0.015 - brakeTorque * 0.015) * 0.01*angularVel * TORQUE_ENERGY_MULTIPLIER
 
     local weights = CalcBiasWeights(loadBias)
     local avgTemp = TempRingsToAvgTemp(data.temp, loadBias)
@@ -109,7 +110,7 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
         local tempDist = math.abs(data.temp[i] - data.working_temp)
         local tempLerpValue = (tempDist / data.working_temp) ^ 0.8
 
-        local tempGain = (slipEnergy * 0.3 + netTorqueEnergy * 0.05 + 0.00005 * angularVel)
+        local tempGain = (slipEnergy * 0.3 + netTorqueEnergy * 0.05 + deformationEnergy * 0.0001 * DEFORMATION_ENERGY_MULTIPLIER)
         tempGain = lerp(tempGain, 0, tempLerpValue) * 0.9
         tempGain = tempGain * (math.max(groundModel.staticFrictionCoefficient - 0.5, 0.1) * 2)
         -- Temp gain from wheelspin / lockup
@@ -175,6 +176,11 @@ local function updateGFX(dt)
     -- end
     -- print(wheels.wheelRotators[0].downForceRaw)
 
+        local roll, pitch, yaw = obj:getRollPitchYaw()
+        local vectorForward = obj:getDirectionVector()
+        -- print("roll " .. roll .. " pitch " .. pitch .. " yaw " .. yaw)
+        local vectorUp = obj:getDirectionVectorUp()
+
     for i, wd in pairs(wheels.wheelRotators) do
         local w = wheelCache[i] or {}
         w.name = wd.name
@@ -201,16 +207,18 @@ local function updateGFX(dt)
         -- TODO: Get this relative to the track angle? Banked turns kinda mess up now I think
 
 
-        local vectorForward = obj:getDirectionVector()
-        local surfaceNormal = mapmgr.surfaceNormalBelow(obj:getPosition() + obj:getNodePosition(wd.node2), wd.radius)
+print("node1 " .. wd.node1)
+print("node2 " .. wd.node2)
+        local surfaceNormal = mapmgr.surfaceNormalBelow(obj:getPosition() + (obj:getNodePosition(wd.node2) + obj:getNodePosition(wd.node1)) / 2 - wd.radius*vectorUp:normalized(), wd.tireWidth / 1.7)
         local vectorRight = vectorForward:cross(surfaceNormal)
-        w.camber = (90 - math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, surfaceNormal, vectorRight))))
-        -- print("w.name " .. w.name)
-        -- print("w.camber " .. w.camber)
+        w.camber = (90 - math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, surfaceNormal, vectorRight)) - math.asin(roll * wd.wheelDir)))
+        -- print("wname " .. w.name)
+        -- print("camber " .. w.camber)
 
         wheelCache[i] = w
 
     end
+
 
     -- for key, value in pairs(obj) do
     --     print("===" .. key .. "===")
@@ -254,7 +262,7 @@ local function updateGFX(dt)
             loadBias = sigmoid(loadBias, 50) * 2 - 1
 
             RecalcTyreWear(dt, i, groundModel, loadBias, treadCoef, slipEnergy, propulsionTorque, brakeTorque, load,
-                angularVel, brakeTemp, wheelCache[i].width, vehicleAirspeed)
+                angularVel, brakeTemp, wheelCache[i].width, vehicleAirspeed, deformationEnergy)
 
 
             local tyreGrip = CalculateTyreGrip(i, loadBias, treadCoef)
