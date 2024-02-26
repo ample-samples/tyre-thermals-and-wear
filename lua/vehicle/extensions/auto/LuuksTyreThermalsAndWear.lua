@@ -136,7 +136,6 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
     --                          This stops extreme brake temp numbers causing  overheating issues^
     local coreTempCooling = (data.temp[4] - ENV_TEMP) * (0.05 * CORE_TEMP_VEL_COOL_RATE * airspeed + 0.05 * CORE_TEMP_COOL_RATE)
     data.temp[4] = data.temp[4] + (coreTempDiffSkin + coreTempDiffBrake - coreTempCooling) * TEMP_CHANGE_RATE_CORE * dt
-    -- print("braketemp " .. brakeTemp)
 
     local thermalCoeff = (math.abs(avgTemp - data.working_temp) / data.working_temp) ^ 0.8
     local wear = (slipEnergy * 0.75 + netTorqueEnergy * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
@@ -170,14 +169,6 @@ end
 local function updateGFX(dt)
     local stream = { data = {} }
 
-
-    -- print("===start===")
-    -- for key, value in pairs(wheels.wheelRotators[0]) do
-    --     print("===" .. key .. "===")
-    --     print(value)
-    -- end
-    -- print(wheels.wheelRotators[0].downForceRaw)
-
     for i, wd in pairs(wheels.wheelRotators) do
         local w = wheelCache[i] or {}
         w.name = wd.name
@@ -200,51 +191,23 @@ local function updateGFX(dt)
         w.downForceRaw = wd.downForceRaw
         w.brakeSurfaceTemperature = wd.brakeSurfaceTemperature or ENV_TEMP -- Fixes AI
 
-        -- Get camber/toe/caster data
-        -- TODO: Get this relative to the track angle? Banked turns kinda mess up now I think
-
+        -- Get camber data
 
         -- node1 is outside rim, node2 is inside
-        local roll, pitch, yaw = obj:getRollPitchYaw()
-        local vectorForward = obj:getDirectionVector()
-        -- print("roll " .. roll .. " pitch " .. pitch .. " yaw " .. yaw)
         local vectorUp = obj:getDirectionVectorUp()
         local localVectNode1 = obj:getNodePosition(wd.node1)
         local localVectNode2 = obj:getNodePosition(wd.node2)
         local vectorWheelForward = (localVectNode2 - localVectNode1):cross(vectorUp)
         local vectorWheelUp = vectorWheelForward:cross(localVectNode2 - localVectNode1)
         local surfaceNormal = mapmgr.surfaceNormalBelow(obj:getPosition() + localVectNode1 - wd.radius*vectorWheelUp:normalized(), 0.1)
-        -- local vectorRight = vectorForward:cross(vectorUp)
-
-
-        -- local wheelToBodyCamber = 90 - math.deg(math.acos(obj:nodeVecPlanarCos(wd.node1, wd.node2, vectorUp, vectorRight)))
 
         -- local vectorSurfaceToVehicle = 
-        -- get plane of wheelforward x wheelup and find arg of that and surfaceNormal
+        -- get plane of wheelforward x wheelup and find arg of it's normal and surfaceNormal
         w.camber = 90 - math.deg(math.acos((localVectNode2 - localVectNode1):normalized():dot(surfaceNormal:normalized())))
-        -- dump("wname " .. w.name)
-        -- dump("camber " .. w.camber)
-
-        -- w.camber = (90 - (math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, surfaceNormal, (localVectNode2 - localVectNode1)*wd.wheelDir)) - math.asin(roll) * wd.wheelDir)))
-            -- w.camber = (90 - math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, vectorWheelUp, vectorWheelForward))))
-        if w.name == "FL" then
-        -- print("wname " .. w.name)
-        -- print("camber " .. w.camber)
-            -- dump(vec3(1, 0, 0):cross(surfaceNormal))
-        -- dump(math.asin(roll) * wd.wheelDir)
-        -- TODO: Investigate why this value changes suddenly on banked track
-        -- dump(90 - math.deg(math.acos(obj:nodeVecPlanarCos(wd.node2, wd.node1, surfaceNormal, vectorRight))))
-
-        end
         wheelCache[i] = w
 
     end
 
-
-    -- for key, value in pairs(obj) do
-    --     print("===" .. key .. "===")
-    -- end
-    -- print("===end===")
 
     -- Based on sensor data, we can estimate how far the load is shifted left-right on the tyre
     local loadBiasSide = sensors.gx2 / 5
