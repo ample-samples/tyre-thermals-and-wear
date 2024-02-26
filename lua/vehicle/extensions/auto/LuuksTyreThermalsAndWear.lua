@@ -85,7 +85,7 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
     -- adjust for lower weight cars which generate less force
     load = ((400 + load) * load / (100 + load) - 0.15 * load)
     -- local STARTING_TEMP = ENV_TEMP + 10
-    local default_working_temp = WORKING_TEMP * treadCoef
+    local default_working_temp = (WORKING_TEMP + 1 * ENV_TEMP) * treadCoef - ENV_TEMP * 1
     local starting_temp
     -- preheat race tyres only
     if treadCoef >= 0.95 then
@@ -160,6 +160,8 @@ local function CalculateTyreGrip(wheelID, loadBias, treadCoef)
     local tempLerpValue = -1 / ((1 + 0.0001 * (-2 + (0.6 * tempDist - 2)^2)^2)) +1
     tempLerpValue = -1 / (1 + 5 * tempDist ^ 2) + 1
     tyreGrip = tyreGrip * lerp(1, 0.9, tempLerpValue)
+    dump("treadCoef " .. treadCoef)
+    dump("tempLerpValue " .. tempLerpValue)
 
     -- TODO: Experiment with including a contact patch size based on loadBias
     return tyreGrip
@@ -288,7 +290,9 @@ local function updateGFX(dt)
                 angularVel, brakeTemp, wheelCache[i].width, vehicleAirspeed, deformationEnergy)
 
 
+            dump("name " .. wheelCache[i].name)
             local tyreGrip = CalculateTyreGrip(i, loadBias, treadCoef)
+            dump("tyreGrip " .. tyreGrip)
             local isNotDeflated = 1
             if wheelCache[i].isTireDeflated or wheelCache[i].isBroken then isNotDeflated = 0 end
 
