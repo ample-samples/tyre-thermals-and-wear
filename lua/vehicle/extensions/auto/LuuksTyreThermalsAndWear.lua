@@ -158,7 +158,7 @@ local function CalculateTyreGrip(wheelID, loadBias, treadCoef)
     -- Insane calculation to make temps forgiving when around ideal temperature 
     -- but linear between 10 and 25 degrees from ideal
     local tempLerpValue = -1 / ((1 + 0.0001 * (-2 + (0.6 * tempDist - 2)^2)^2)) +1
-    tempLerpValue = -1 / (1 + 5 * tempDist ^ 2) + 1
+    tempLerpValue = -1 / (1 + 0.1*tempDist ^ 2) + 1
     tyreGrip = tyreGrip * lerp(1, 0.9, tempLerpValue)
     dump("treadCoef " .. treadCoef)
     dump("tempLerpValue " .. tempLerpValue)
