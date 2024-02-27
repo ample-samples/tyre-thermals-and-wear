@@ -123,7 +123,7 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
             math.max(((angularVel / math.max(slipEnergy, 0.001)) * 0.00055) ^ 0.75 * 0.84, 1) * dt
         local skinTempDiffCore = (data.temp[4] - avgTemp) * TEMP_CHANGE_RATE_SKIN_FROM_CORE
 
-        local tempDiff = (avgTemp - data.temp[i]) * 0.5
+        local tempDiff = (avgTemp - data.temp[i]) * 0.1
 
         data.temp[i] = data.temp[i] +
             dt * (tempGain - tempCoolingRate * coolVelCoeff + tempDiff + skinTempDiffCore) * TEMP_CHANGE_RATE / tyreWidthCoeff
