@@ -61,9 +61,9 @@ local function CalcBiasWeights(loadBias)
     -- tyreStiffnessFactor controls how evenly the tyre supports weight as camber changes.
     -- Higher is more support and less even support
     local tyreStiffnessFactor = 0.25
-    local weightCenter = -1 / (1 + 4 * (loadBias ^ -2)) + 1
-    local weightLeft = -0.9*loadBias + 1
-    local weightRight = 0.9*loadBias + 1
+    local weightCenter = -1 / (1 + 5 * (loadBias ^ -2)) + 1
+    local weightLeft = -0.8*loadBias + 1
+    local weightRight = 0.8*loadBias + 1
 
     local weightSum = weightLeft + weightCenter + weightRight
     local leftNormalise = weightLeft / weightSum
@@ -141,7 +141,7 @@ local function RecalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, sli
     local wear = (slipEnergy * 0.75 + netTorqueEnergy * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
         math.max(thermalCoeff, 0.75) * groundModel.staticFrictionCoefficient
     data.condition = math.max(data.condition - wear, 0)
-    data.condition = 100
+    -- data.condition = 100
     tyreData[wheelID] = data
 end
 
