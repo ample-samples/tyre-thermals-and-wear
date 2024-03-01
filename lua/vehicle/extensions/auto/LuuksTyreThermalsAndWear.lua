@@ -203,7 +203,7 @@ local function updateGFX(dt)
         local vectorWheelForward = (localVectNode2 - localVectNode1):cross(vectorUp)
         local vectorWheelUp = vectorWheelForward:cross(localVectNode2 - localVectNode1)
         local surfaceNormal = mapmgr.surfaceNormalBelow(
-        obj:getPosition() + localVectNode1 - wd.radius * vectorWheelUp:normalized(), 0.1)
+        obj:getPosition() + (localVectNode2 + localVectNode1)/2 - wd.radius * vectorWheelUp:normalized(), 0.1)
 
         -- local vectorSurfaceToVehicle =
         -- get plane of wheelforward x wheelup and find arg of it's normal and surfaceNormal
