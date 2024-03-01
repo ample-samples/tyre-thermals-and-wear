@@ -27,8 +27,6 @@ local CORE_TEMP_COOL_RATE = 3.0       -- Modifier for how fast core temperature 
 
 local WEAR_RATE = 0.1
 
--- local testing = obj:queueGameEngineLua("dump(core_vehicle_manager.getPlayerVehicleData().vdata.variables[\"$JustForFun\"].val)")
-
 local tyreData = {}
 local wheelCache = {}
 
@@ -222,9 +220,6 @@ local function updateGFX(dt)
     -- based on individual tyre load!
 
     local vehicleAirspeed = electrics.values.airflowspeed
-
-
-    -- dump(vdata.variables)
 
     for i = 0, #wheels.wheelRotators do
         local wheel = obj:getWheel(i)
