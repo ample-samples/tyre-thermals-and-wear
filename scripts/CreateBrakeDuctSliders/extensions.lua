@@ -53,7 +53,7 @@ local function onVehicleDestroyed(vehID)
 	variablesById[vehID] = nil
 end
 
-M.onVehicleSpawned = onVehicleSpawned
-M.onSpawnCCallback = onSpawnCCallback
-M.onVehicleDestroyed = onVehicleDestroyed
+-- M.onVehicleSpawned = onVehicleSpawned
+-- M.onSpawnCCallback = onSpawnCCallback
+-- M.onVehicleDestroyed = onVehicleDestroyed
 return M
