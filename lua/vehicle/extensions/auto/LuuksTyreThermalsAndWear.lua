@@ -276,7 +276,7 @@ local function updateGFX(dt)
                 brake_temp = brakeTemp,
                 brake_working_temp = 800
             })
-            if condition < 6 then
+            if condition < 0.1 then
                 beamstate.deflateTire(i)
             end
 
