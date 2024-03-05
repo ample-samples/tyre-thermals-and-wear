@@ -78,6 +78,7 @@ angular.module("beamng.apps")
                     ctx.fillStyle = "#ffffffff";
                     ctx.font = 'bold 18pt "Lucida Console", Monaco, monospace';
                     ctx.fillText("" + Math.ceil(condition) + "%", cx, y - 8);
+                    // ctx.fillText("" + Math.ceil(temps[3]) + " C", cx, y - 8);
 
                     var t = condition / 100;
 
@@ -134,83 +135,22 @@ angular.module("beamng.apps")
                     }
 
                     // Draw brakes
-                    var brakeTempT = 1.0 - Math.min(Math.max(brake_temp / brake_working_temp - 0.5, 0), 1);
-                    var brakeHue = lowHue + (highHue - lowHue) * brakeTempT;
-                    ctx.fillStyle = "hsla(" + hue + ",82%,56%,1)";
+                    // var brakeTempT = 1.0 - Math.min(Math.max(brake_temp / brake_working_temp - 0.5, 0), 1);
+                    // var brakeHue = lowHue + (highHue - lowHue) * brakeTempT;
+                    // ctx.fillStyle = "hsla(" + hue + ",82%,56%,1)";
+                    // roundRect(ctx, cx - w / 24.0 - w / 1.75 * (right * 2.0 - 1.0), y + h * 0.2, w / 12.0, h * 0.6, 3.0, true);
+                        // Draw core temp
+                    var coreTempT = 1.0 - Math.min(Math.max(temps[3] / working_temp - 0.5, 0), 1);
+                    var coreHue = lowHue + (highHue - lowHue) * coreTempT;
+                        let coreTempIsDisplayed;
+                        if (t < 0.1) {
+                            coreTempIsDisplayed = 0;
+                            ctx.fillStyle = "rgba(0,0,0,0.45)";
+                        } else {
+                            ctx.fillStyle = "hsla(" + coreHue + ",82%,56%,1)";
+                            coreTempIsDisplayed = 1;
+                        }
                     roundRect(ctx, cx - w / 24.0 - w / 1.75 * (right * 2.0 - 1.0), y + h * 0.2, w / 12.0, h * 0.6, 3.0, true);
-                }
-
-                function drawWheelDataOld(name, contact_material, tread_coef, avg_temp, temps, working_temp, condition, load_bias) {
-                    var right = 0;
-                    var back = 0;
-
-                    if (name == "RR" || name == "RL") {
-                        back = 1;
-                    }
-
-                    if (name == "FR" || name == "RR") {
-                        right = 1;
-                    }
-
-                    var w = c.width / 3.5;
-                    var h = c.height / 3.5;
-                    var x = w * 0.5 + ((w * 1.5) * right);
-                    var y = h * 0.5 + ((h * 1.5) * back);
-                    var cx = x + w * 0.5;
-                    var cy = y + h * 0.5;
-
-                    // Color with dynamic wear
-                    var fillGrad = ctx.createLinearGradient(x,y,x+w,y);
-                    var gradStop = 0.0;
-                    for (let i = 0; i < 3; i++) {
-                        var tempT = 1.0 - Math.min(Math.max(temps[i] / working_temp - 0.5, 0), 1);
-                        var lowHue = 0;
-                        var highHue = 248;
-                        var hue = lowHue + (highHue - lowHue) * tempT;
-                        var fillColor = "hsla(" + hue + ",82%,56%,0.65)";
-                        fillGrad.addColorStop(gradStop, fillColor);
-                        gradStop += 0.5;
-                    }
-                    // var fillColor = "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ",0.65)";
-                    var t = condition / 100;
-                    ctx.lineWidth = "0";
-                    ctx.fillStyle = "rgba(0,0,0,0.65)";
-                    ctx.beginPath();
-                    ctx.rect(x, y, w, h);
-                    ctx.fill();
-                    if (t > 0.1) {
-                        var ft = 1.0 - t;
-                        ctx.fillStyle = fillGrad;
-                        ctx.beginPath();
-                        ctx.rect(x, y+h*ft, w, h - h*ft);
-                        ctx.fill();
-                    }
-
-                    // Outline
-                    var gradientStroke = ctx.createRadialGradient(x + w * 0.5, y + h * 0.5, 0, x + w * 0.5, y + h * 0.5, w * 0.95);
-                    gradientStroke.addColorStop(0, "rgba(0,0,0,1)");
-                    gradientStroke.addColorStop(0.95, "rgba(0,0,0,1)");
-                    gradientStroke.addColorStop(1, "rgba(0,0,0,0)");
-                    ctx.lineWidth = "4";
-                    ctx.strokeStyle = gradientStroke;
-                    ctx.beginPath();
-                    ctx.rect(x, y, w, h);
-                    ctx.stroke();
-
-                    // Draw load bias
-                    ctx.fillStyle = "#ff0000ff";
-                    ctx.beginPath();
-                    ctx.rect(x + w * 0.5 + w * (load_bias * 0.5) - 2, y, 4, h);
-                    ctx.fill();
-
-                    // Information text
-                    ctx.fillStyle = "#000000ff";
-                    ctx.font = '9pt "Lucida Console", Monaco, monospace';
-                    ctx.fillText("" + name, cx, cy - 15);
-                    ctx.fillText("" + avg_temp + " C", cx, cy + 5);
-                    ctx.fillText("" + condition + "%", cx, cy + 25);
-                    ctx.fillText("Core " + temps[3] + " C", cx, cy + 42);
-                    ctx.fillText("" + contact_material, cx, cy - 35);
                 }
 
                 var dataStream = streams.TyreWearThermals;
