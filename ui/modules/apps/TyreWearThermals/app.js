@@ -51,7 +51,7 @@ angular.module("beamng.apps")
                     }
                 }
 
-                function drawWheelData(name, contact_material, tread_coef, avg_temp, temps, working_temp, condition, load_bias, brake_temp, brake_working_temp) {
+                function drawWheelData(name, contact_material, tread_coef, avg_temp, temps, working_temp, condition, load_bias, brake_temp, brake_working_temp, camber) {
                     ctx.textAlign = 'center';
 
                     var right = 0;
@@ -120,17 +120,30 @@ angular.module("beamng.apps")
                         ctx.fillText("" + Math.floor(temps[i]), x + (w / 3.0 * i) + 2 + (w / 3.0 - 8) / 2.0, y + h + 22);
 
                         // Load bias
+                        // ctx.fillStyle = "rgba(255,50,50,0.85)";
+                        // ctx.beginPath();
+                        // ctx.moveTo(x + w * 0.5 + w * (load_bias * 0.5), y - 2);
+                        // ctx.lineTo(x + w * 0.5 + w * (load_bias * 0.5) - 6, y - 8);
+                        // ctx.lineTo(x + w * 0.5 + w * (load_bias * 0.5) + 6, y - 8);
+                        // ctx.fill();
+                        //
+                        // ctx.beginPath();
+                        // ctx.moveTo(x + w * 0.5 + w * (load_bias * 0.5), y + h + 2);
+                        // ctx.lineTo(x + w * 0.5 + w * (load_bias * 0.5) - 6, y + h + 8);
+                        // ctx.lineTo(x + w * 0.5 + w * (load_bias * 0.5) + 6, y + h + 8);
+                        // ctx.fill();
+                            // camber
                         ctx.fillStyle = "rgba(255,50,50,0.85)";
                         ctx.beginPath();
-                        ctx.moveTo(x + w * 0.5 + w * (load_bias * 0.5), y - 2);
-                        ctx.lineTo(x + w * 0.5 + w * (load_bias * 0.5) - 6, y - 8);
-                        ctx.lineTo(x + w * 0.5 + w * (load_bias * 0.5) + 6, y - 8);
+                        ctx.moveTo(x + w * 0.5 + w * (camber * 0.2 * 0.5), y - 2);
+                        ctx.lineTo(x + w * 0.5 + w * (camber * 0.2 * 0.5) - 6, y - 8);
+                        ctx.lineTo(x + w * 0.5 + w * (camber * 0.2 * 0.5) + 6, y - 8);
                         ctx.fill();
 
                         ctx.beginPath();
-                        ctx.moveTo(x + w * 0.5 + w * (load_bias * 0.5), y + h + 2);
-                        ctx.lineTo(x + w * 0.5 + w * (load_bias * 0.5) - 6, y + h + 8);
-                        ctx.lineTo(x + w * 0.5 + w * (load_bias * 0.5) + 6, y + h + 8);
+                        ctx.moveTo(x + w * 0.5 + w * (camber * 0.2 * 0.5), y + h + 2);
+                        ctx.lineTo(x + w * 0.5 + w * (camber * 0.2 * 0.5) - 6, y + h + 8);
+                        ctx.lineTo(x + w * 0.5 + w * (camber * 0.2 * 0.5) + 6, y + h + 8);
                         ctx.fill();
                     }
 
@@ -171,6 +184,7 @@ angular.module("beamng.apps")
                         dataStream.data[i].load_bias,
                         dataStream.data[i].brake_temp,
                         dataStream.data[i].brake_working_temp,
+                        dataStream.data[i].camber,
                     );
                 }
             });
