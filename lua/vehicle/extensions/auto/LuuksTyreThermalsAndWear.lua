@@ -170,6 +170,8 @@ local function CalculateTyreGrip(wheelID, loadBias, treadCoef)
     local tempLerpValue = -1 / ((1 + 0.0001 * (-2 + (0.6 * tempDist - 2) ^ 2) ^ 2)) + 1
     tempLerpValue = -1 / (1 + 0.005 * tempDist ^ 2) + 1
     tyreGrip = tyreGrip * lerp(1, 0.9, tempLerpValue)
+    -- Keep tyre grip relatively the same at usual temps but lower at extremes
+    tyreGrip = tyreGrip * (1 - math.abs((tyreGrip - 90) / 1000))
 
     -- TODO: Experiment with including a contact patch size based on loadBias
     tyreGripTable[wheelID] = tyreGrip
