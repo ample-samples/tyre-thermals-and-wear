@@ -9,7 +9,7 @@ local WORKING_TEMP = 85                      -- The "perfect" working temperatur
 local ENV_TEMP = 21                          -- In celsius. Represents both the outside air and surface temp in 1 variable.
 
 local TEMP_CHANGE_RATE = 0.9                -- Global modifier for how fast skin temperature changes
-local TEMP_WORK_GAIN_RATE = 1.5              -- Modifier for how fast temperature rises from wheel load e.i. generating G's
+local TEMP_WORK_GAIN_RATE = 1.5              -- Modifier for how fast temperature rises from wheel side loading e.i. generating G's
 local TEMP_SLIP_GAIN_RATE = 1.4              --
 local TEMP_COOL_RATE = 78.0                  -- Modifier for how fast temperature cools down related to ENV_TEMP
 local TEMP_COOL_VEL_RATE = 0.06              -- Modifier for how much velocity influences cooling skin
@@ -126,15 +126,13 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
         -- TODO: Test horizontal G * weights[i]
 
         + 0.15 * relative_work * TEMP_WORK_GAIN_RATE / (1 + slipEnergy ^ 2)) * groundModel.staticFrictionCoefficient / tyreWidthCoeff )
-        -- + 0.0001 * relative_work * (0.01 / (1 + slipEnergy ^ 2))) * TEMP_WORK_GAIN_RATE) * groundModel.staticFrictionCoefficient
-        -- + (0.01 / (1 + slipEnergy ^ 2)) * 3 * weights[i]) * TEMP_WORK_GAIN_RATE) * groundModel.staticFrictionCoefficient
         local tempCoolingRate = (data.temp[i] - ENV_TEMP) * 0.05 * TEMP_COOL_RATE
         local coolVelCoeff = TEMP_COOL_VEL_RATE *
             math.max(((angularVel / math.max(slipEnergy, 0.001)) * 0.00055) ^ 0.75 * 0.84, 1) * dt
         local skinTempDiffCore = (data.temp[4] - avgTemp) * TEMP_CHANGE_RATE_SKIN_FROM_CORE
 
         local tempDiff = (avgTemp - data.temp[i]) * 0.2
-        tempGain = tempGain + tempGain * (data.working_temp - data.temp[i]) / 20
+        tempGain = tempGain + ( tempGain * (data.working_temp - data.temp[i]) / 20 )
 
         data.temp[i] = data.temp[i] +
              dt * (tempGain - tempCoolingRate * coolVelCoeff + tempDiff + skinTempDiffCore) * TEMP_CHANGE_RATE /
@@ -154,7 +152,6 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     local wear = (slipEnergy * 0.75 + netTorqueEnergy * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
         math.max(thermalCoeff, 0.75) * groundModel.staticFrictionCoefficient
     data.condition = math.max(data.condition - wear, 0)
-    data.condition = 100
     -- data.condition = 100
     tyreData[wheelID] = data
 end
@@ -183,17 +180,7 @@ end
 -- vehicle data for the current vehicle.
 local function updateGFX(dt)
     local stream = { data = {} }
-    -- wheels.wheelTorque
-    -- wheels.wheelPower
-    -- wheels.wheelRotators
-    -- wheels.rotators
-    for key, value in pairs(wheels) do
-        -- print(key)
-    end
     for i, wd in pairs(wheels.wheelRotators) do
-        -- for key, value in pairs(wd) do
-        --     print(key)
-        -- end
         local w = wheelCache[i] or {}
         w.name = wd.name
         w.radius = wd.radius
@@ -216,16 +203,7 @@ local function updateGFX(dt)
         w.downForceRaw = wd.downForceRaw
         w.brakeSurfaceTemperature = wd.brakeSurfaceTemperature or ENV_TEMP -- Fixes AI
 
-        -- if w.name == "FL" then
-            -- dump(w.name)
-            for key, value in pairs(wd) do
-                -- print(key)
-            end
-            -- dump(wd.slipRatioTarget)
-            -- print(w.lastSideSlip)
-        -- end
         -- Get camber data
-
         -- node1 is outside rim, node2 is inside
         local vectorUp = obj:getDirectionVectorUp()
         local localVectNode1 = obj:getNodePosition(wd.node1)
@@ -252,7 +230,7 @@ local function updateGFX(dt)
 
     -- l-r
     local gx = sensors.gx / 9.81
-    -- fw-bw
+    -- f-b
     local gy = sensors.gy / 9.81
     -- u-d
     local gz = sensors.gz / 9.81
