@@ -88,7 +88,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     local default_working_temp = (WORKING_TEMP + 1 * ENV_TEMP) * treadCoef - ENV_TEMP * 1
     local starting_temp
     -- preheat race tyres only
-    if treadCoef >= 0.95 then
+    if treadCoef >= 1.95 then
         starting_temp = default_working_temp
     else
         starting_temp = ENV_TEMP
@@ -117,7 +117,6 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
 
         -- TODO: Multiply by vehicle mass?
         local relative_work = math.abs(g_table.gx) * loadCoeffIndividual / 1000
-        dump(tyreGripTable)
         local tempGain = (slipEnergy * 0.3 + netTorqueEnergy * 0.05 + deformationEnergy * 0.001 * DEFORMATION_ENERGY_MULTIPLIER) *
         3 * weights[i]
         tempGain = tempGain * (math.max(groundModel.staticFrictionCoefficient - 0.5, 0.1) * 2)
@@ -135,9 +134,10 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
         local skinTempDiffCore = (data.temp[4] - avgTemp) * TEMP_CHANGE_RATE_SKIN_FROM_CORE
 
         local tempDiff = (avgTemp - data.temp[i]) * 0.2
+        tempGain = tempGain + tempGain * (data.working_temp - data.temp[i]) / 20
 
         data.temp[i] = data.temp[i] +
-            dt * (tempGain - tempCoolingRate * coolVelCoeff + tempDiff + skinTempDiffCore) * TEMP_CHANGE_RATE /
+             dt * (tempGain - tempCoolingRate * coolVelCoeff + tempDiff + skinTempDiffCore) * TEMP_CHANGE_RATE /
             tyreWidthCoeff
     end
 
