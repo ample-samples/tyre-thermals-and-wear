@@ -132,7 +132,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
         local skinTempDiffCore = (data.temp[4] - avgTemp) * TEMP_CHANGE_RATE_SKIN_FROM_CORE
 
         local tempDiff = (avgTemp - data.temp[i]) * 0.2
-        tempGain = tempGain + ( tempGain * (data.working_temp - data.temp[i]) / 20 )
+        tempGain = tempGain + ( tempGain * (data.working_temp - data.temp[i]) / 20 ) * treadCoef
 
         data.temp[i] = data.temp[i] +
              dt * (tempGain - tempCoolingRate * coolVelCoeff + tempDiff + skinTempDiffCore) * TEMP_CHANGE_RATE /
