@@ -24,7 +24,7 @@ local TEMP_GAIN_RATE_CORE = 0.9       -- Modifier for how fast core temperature 
 local CORE_TEMP_VEL_COOL_RATE = 0.25  -- Modifier for how fast core temperature cools down from moving air
 local CORE_TEMP_COOL_RATE = 3.0       -- Modifier for how fast core temperature cools down from static air/IR radiation
 
-local WEAR_RATE = 0.1
+local WEAR_RATE = 0.01
 
 local tyreGripTable = {}
 local tyreData = {}
@@ -171,7 +171,7 @@ local function CalculateTyreGrip(wheelID, loadBias, treadCoef)
     tempLerpValue = -1 / (1 + 0.005 * tempDist ^ 2) + 1
     tyreGrip = tyreGrip * lerp(1, 0.9, tempLerpValue)
     -- Keep tyre grip relatively the same at usual temps but lower at extremes
-    tyreGrip = tyreGrip * (1 - math.abs((data.temp - 90) / 1000))
+    tyreGrip = tyreGrip * (1 - math.abs((avgTemp - 90) / 1500))
 
     -- TODO: Experiment with including a contact patch size based on loadBias
     tyreGripTable[wheelID] = tyreGrip
