@@ -88,7 +88,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     local default_working_temp = (WORKING_TEMP + 1 * ENV_TEMP) * treadCoef - ENV_TEMP * 1
     local starting_temp
     -- preheat race tyres only
-    if treadCoef >= 1.95 then
+    if treadCoef >= 0.95 then
         starting_temp = default_working_temp
     else
         starting_temp = ENV_TEMP
