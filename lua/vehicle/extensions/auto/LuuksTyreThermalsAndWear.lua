@@ -24,7 +24,7 @@ local TEMP_GAIN_RATE_CORE = 0.4       -- Modifier for how fast core temperature 
 local CORE_TEMP_VEL_COOL_RATE = 0.05  -- Modifier for how fast core temperature cools down from moving air
 local CORE_TEMP_COOL_RATE = 2.0       -- Modifier for how fast core temperature cools down from static air/IR radiation
 
-local WEAR_RATE = 0.1
+local WEAR_RATE = 0.04
 
 local tyreGripTable = {}
 local tyreData = {}
