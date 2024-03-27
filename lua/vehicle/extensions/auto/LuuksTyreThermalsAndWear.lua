@@ -27,6 +27,7 @@ local CORE_TEMP_COOL_RATE = 2.0       -- Modifier for how fast core temperature 
 local WEAR_RATE = 0.04
 
 local tyreGripTable = {}
+local brakeDuctSettings
 local tyreData = {}
 local wheelCache = {}
 
@@ -121,7 +122,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
         3 * weights[i]
         tempGain = tempGain * (math.max(groundModel.staticFrictionCoefficient - 0.5, 0.1) * 2)
             -- Temp gain from wheelspin / lockup
-        + (((0.003 * slipEnergy ^ 2 * loadCoeffIndividual) * TEMP_SLIP_GAIN_RATE * (tyreGripTable[wheelID] or 1)
+        + (((0.003 * slipEnergy ^ 2 * loadCoeffIndividual) * TEMP_SLIP_GAIN_RATE * (math.sqrt(tyreGripTable[wheelID] or 1))
         -- Temp gain from work done in corner
         -- TODO: Test horizontal G * weights[i]
 
@@ -147,7 +148,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     local coreTempDiffBrake = (0.3 * (brakeTemp - data.temp[4] - 0.0009 * brakeTemp ^ 2)) * TEMP_GAIN_RATE_CORE
     --                          This stops extreme brake temp numbers causing  overheating issues^
     local coreTempCooling = (data.temp[4] - ENV_TEMP) *
-    (0.05 * CORE_TEMP_VEL_COOL_RATE * airspeed + 0.05 * CORE_TEMP_COOL_RATE)
+    (0.05 * CORE_TEMP_VEL_COOL_RATE * (((brakeDuctSettings or 4) - 1) / 3) * airspeed + 0.05 * CORE_TEMP_COOL_RATE)
     data.temp[4] = data.temp[4] + (coreTempDiffSkin + coreTempDiffBrake - coreTempCooling) * TEMP_CHANGE_RATE_CORE * dt
 
     local thermalCoeff = (math.abs(avgTemp - data.working_temp) / data.working_temp) ^ 0.8
@@ -184,6 +185,20 @@ end
 -- This is a special function that runs every frame, and has full access to
 -- vehicle data for the current vehicle.
 local function updateGFX(dt)
+    -- if brakeDuctSettings.vdata == nil then
+    --     dump "getting"
+    --     local vehicleData = core_vehicle_manager.getVehicleData(vehID)
+    --       if not vehicleData then return end
+    --       local vdata = vehicleData.vdata
+    --       if not vdata then return end
+    --     brakeDuctSettings.vdata = vdata
+    -- end
+    if brakeDuctSettings == nil then
+        brakeDuctSettings = obj:getLastMailbox("tyreWearMailbox")
+        if type(brakeDuctSettings) == "string" then
+            brakeDuctSettings = tonumber(brakeDuctSettings)
+        end
+    end
     local stream = { data = {} }
     for i, wd in pairs(wheels.wheelRotators) do
         local w = wheelCache[i] or {}
@@ -224,7 +239,6 @@ local function updateGFX(dt)
         w.camber = 90 - math.deg(math.acos((localVectNode2 - localVectNode1):normalized():dot(surfaceNormal:normalized())))
         wheelCache[i] = w
     end
-
 
     -- Based on sensor data, we can estimate how far the load is shifted left-right on the tyre
     local loadBiasSide = sensors.gx2 / 5
@@ -330,6 +344,11 @@ local function onInit()
     obj:queueGameEngineLua("if luukstyrethermalsandwear then luukstyrethermalsandwear.getGroundModels() end")
 end
 
+function onSettingsChanged()
+    brakeDuctSettings = nil
+end
+
+M.onSettingsChanged = onSettingsChanged
 M.onInit = onInit
 M.onReset = onReset
 M.updateGFX = updateGFX
