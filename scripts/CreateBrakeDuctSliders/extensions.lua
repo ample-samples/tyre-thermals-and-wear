@@ -16,18 +16,18 @@ local function onVehicleSpawned(vehID)
 	local partConfig = be:getObjectByID(vehID).partConfig -- either serialized table or a pathname
 	local tablePartConfig = jsonReadFile(partConfig) or deserialize(partConfig)
 	-- dump(tablePartConfig)
-	if tablePartConfig.vars and tablePartConfig.vars["$JustForFun"] then
-		brakeSetting = tablePartConfig.vars["$JustForFun"]
+	if tablePartConfig.vars and tablePartConfig.vars["$WheelCoolingDuct"] then
+		brakeSetting = tablePartConfig.vars["$WheelCoolingDuct"]
 	end
 
 	-- if brakeSetting ~= nil then
-	-- 	brakeSetting = v.data.variables["$JustForFun"].val
+	-- 	brakeSetting = v.data.variables["$WheelCoolingDuct"].val
 	-- end
 
 	if not variablesById[vehID] then
 		variablesById[vehID] = {
-			["$JustForFun"] = {
-				name = "$JustForFun",
+			["$WheelCoolingDuct"] = {
+				name = "$WheelCoolingDuct",
 				category = "Brakes",
 				title = "Wheel Cooling ducts",
 				description = "Controls the amount of air passing over the inner wheel. 1 - Fully closed, 6 - Fully open",
@@ -45,7 +45,7 @@ local function onVehicleSpawned(vehID)
 			}
 		}
 	else
-		variablesById[vehID]["$JustForFun"].val = brakeSetting or 4
+		variablesById[vehID]["$WheelCoolingDuct"].val = brakeSetting or 4
 	end
 
 	tableMerge(vdata.variables, variablesById[vehID])
@@ -67,7 +67,7 @@ local function onSpawnCCallback(vehID)
 		end
 	end
 	brakeSetting = nil
-	be:sendToMailbox("tyreWearMailbox", core_vehicle_manager.getPlayerVehicleData().vdata.variables["$JustForFun"].val or 4)
+	be:sendToMailbox("tyreWearMailbox", core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuct"].val or 4)
 end
 
 local function onVehicleDestroyed(vehID)
