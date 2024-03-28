@@ -199,6 +199,7 @@ local function updateGFX(dt)
             brakeDuctSettings = tonumber(brakeDuctSettings)
         end
     end
+
     local stream = { data = {} }
     for i, wd in pairs(wheels.wheelRotators) do
         local w = wheelCache[i] or {}
@@ -336,6 +337,7 @@ end
 
 local function onReset()
     tyreData = {}
+    brakeDuctSettings = nil
 
     obj:queueGameEngineLua("if luukstyrethermalsandwear then luukstyrethermalsandwear.getGroundModels() end")
 end
@@ -344,7 +346,7 @@ local function onInit()
     obj:queueGameEngineLua("if luukstyrethermalsandwear then luukstyrethermalsandwear.getGroundModels() end")
 end
 
-function onSettingsChanged()
+local function onSettingsChanged()
     brakeDuctSettings = nil
 end
 

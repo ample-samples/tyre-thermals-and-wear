@@ -1,15 +1,28 @@
+local json = require("../utils/json_parse")
 local M = {}
 
 local variablesById = {}
 local vehid
 
+local brakeSetting = nil
 local function onVehicleSpawned(vehID)
 	vehid = vehID
+	brakeSetting = nil
 	local vehicleData = core_vehicle_manager.getVehicleData(vehID)
 	if not vehicleData then return end
 	local vdata = vehicleData.vdata
 	if not vdata then return end
 	if not vdata.variables then vdata.variables = {} end
+	local partConfig = be:getObjectByID(vehID).partConfig -- either serialized table or a pathname
+	local tablePartConfig = jsonReadFile(partConfig) or deserialize(partConfig)
+	-- dump(tablePartConfig)
+	if tablePartConfig.vars and tablePartConfig.vars["$JustForFun"] then
+		brakeSetting = tablePartConfig.vars["$JustForFun"]
+	end
+
+	-- if brakeSetting ~= nil then
+	-- 	brakeSetting = v.data.variables["$JustForFun"].val
+	-- end
 
 	if not variablesById[vehID] then
 		variablesById[vehID] = {
@@ -26,16 +39,20 @@ local function onVehicleSpawned(vehID)
 				max =   6, maxDis =   6,
 				step = 1, stepDis = 1,
 				default = 4,
-				val = 4
+				val = brakeSetting or 4
 			}
 		}
+	else
+		variablesById[vehID]["$JustForFun"].val = brakeSetting or 4
 	end
 
 	tableMerge(vdata.variables, variablesById[vehID])
 end
 
 local function onSettingsChanged()
-	be:sendToMailbox("tyreWearMailbox", core_vehicle_manager.getPlayerVehicleData().vdata.variables["$JustForFun"].val)
+	if not be then return end
+	brakeSetting = nil
+	be:sendToMailbox("tyreWearMailbox", core_vehicle_manager.getPlayerVehicleData().vdata.variables["$JustForFun"].val or 4)
 end
 
 local function onSpawnCCallback(vehID)
@@ -57,8 +74,8 @@ end
 
 local function onVehicleDestroyed(vehID)
 	variablesById[vehID] = nil
+	brakeSetting = nil
 end
-
 
 M.onVehicleSpawned = onVehicleSpawned
 M.onSpawnCCallback = onSpawnCCallback
