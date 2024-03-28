@@ -1,12 +1,9 @@
-local json = require("../utils/json_parse")
 local M = {}
 
 local variablesById = {}
-local vehid
 
 local brakeSetting = nil
 local function onVehicleSpawned(vehID)
-	vehid = vehID
 	brakeSetting = nil
 	local vehicleData = core_vehicle_manager.getVehicleData(vehID)
 	if not vehicleData then return end
@@ -59,7 +56,7 @@ local function onSpawnCCallback(vehID)
 
 	if type(desirialized) ~= "table" or type(desirialized.vars) ~= "table" then return end
 
-	for name, variable in pairs(variablesById[vehID]) do
+	for name, _ in pairs(variablesById[vehID]) do
 		if desirialized.vars[name] then
 			variablesById[vehID][name].val = desirialized.vars[name]
 		else
