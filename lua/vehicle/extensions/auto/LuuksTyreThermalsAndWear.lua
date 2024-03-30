@@ -199,6 +199,7 @@ local function updateGFX(dt)
             brakeDuctSettings = tonumber(brakeDuctSettings)
         end
     end
+        dump(brakeDuctSettings)
 
     local stream = { data = {} }
     for i, wd in pairs(wheels.wheelRotators) do

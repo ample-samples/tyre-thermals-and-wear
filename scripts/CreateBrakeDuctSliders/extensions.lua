@@ -63,6 +63,10 @@ local function onSpawnCCallback(vehID)
 			variablesById[vehID][name].val = variablesById[vehID][name].default or variablesById[vehID][name].val
 		end
 	end
+end
+
+local function onSettingsChanged()
+	if not be then return end
 	brakeSetting = nil
 	be:sendToMailbox("tyreWearMailbox", core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuct"].val or 4)
 end
@@ -72,6 +76,7 @@ local function onVehicleDestroyed(vehID)
 	brakeSetting = nil
 end
 
+M.onSettingsChanged = onSettingsChanged
 M.onVehicleSpawned = onVehicleSpawned
 M.onSpawnCCallback = onSpawnCCallback
 M.onVehicleDestroyed = onVehicleDestroyed
