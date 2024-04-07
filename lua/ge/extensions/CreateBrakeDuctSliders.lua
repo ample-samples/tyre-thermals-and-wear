@@ -67,8 +67,12 @@ end
 
 local function onSettingsChanged()
 	if not be then return end
+	if not core_vehicle_manager.getPlayerVehicleData() then return end
 	brakeSetting = nil
-	be:sendToMailbox("tyreWearMailbox", core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuct"].val or 4)
+	be:sendToMailbox("tyreWearMailboxDuct", core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuct"].val or 4)
+	-- dump(core_environment.getTemperatureK() .. " K")
+	local env_temp = tonumber(core_environment.getTemperatureK()) - 273.15
+	be:sendToMailbox("tyreWearMailboxEnvTemp", env_temp)
 end
 
 local function onVehicleDestroyed(vehID)

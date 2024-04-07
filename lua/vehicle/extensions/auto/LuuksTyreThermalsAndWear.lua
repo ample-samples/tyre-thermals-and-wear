@@ -7,6 +7,7 @@ local M = {}
 local OPTIMAL_PRESSURE = 158000              -- In pascal (23 psi)
 local WORKING_TEMP = 85                      -- The "perfect" working temperature for your tyres
 local ENV_TEMP = 21                          -- In celsius. Represents both the outside air and surface temp in 1 variable.
+local got_env_temp = false                   -- set to false until the mailbox request comes back
 
 local TEMP_CHANGE_RATE = 0.9                -- Global modifier for how fast skin temperature changes
 local TEMP_WORK_GAIN_RATE = 1.5              -- Modifier for how fast temperature rises from wheel side loading e.i. generating G's
@@ -18,7 +19,7 @@ local TORQUE_ENERGY_MULTIPLIER = 1.6       -- Modifier for how much energy is ge
 
 local TEMP_CHANGE_RATE_SKIN_FROM_CORE = 0.15 -- Modifier for how fast skin temperature changes from core
 
-local TEMP_CHANGE_RATE_CORE_FROM_SKIN = 1
+local TEMP_CHANGE_RATE_CORE_FROM_SKIN = 1 -- Modifier for how much the temperature of the skin changes the temperature of the core
 local TEMP_CHANGE_RATE_CORE = 0.0325 -- Modifier for how fast the core temperature changes
 local TEMP_GAIN_RATE_CORE = 0.4       -- Modifier for how fast core temperature rises from brake temp
 local CORE_TEMP_VEL_COOL_RATE = 0.05  -- Modifier for how fast core temperature cools down from moving air
@@ -86,7 +87,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     -- adjust for lower weight cars which generate less force
     load = ((400 + load) * load / (100 + load) - 0.15 * load)
     -- local STARTING_TEMP = ENV_TEMP + 10
-    local default_working_temp = (WORKING_TEMP + 1 * ENV_TEMP) * treadCoef - ENV_TEMP * 1
+    local default_working_temp = (WORKING_TEMP + 1 * ENV_TEMP) * lerp(0.8, 1, treadCoef) - ENV_TEMP * 1
     local starting_temp
     -- preheat race tyres only
     if treadCoef >= 0.0 then
@@ -94,6 +95,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     else
         starting_temp = ENV_TEMP
     end
+
     local defaultTyreData = {
         working_temp = default_working_temp,
         temp = { starting_temp, starting_temp, starting_temp, starting_temp },
@@ -128,7 +130,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
 
         + 0.15 * relative_work * TEMP_WORK_GAIN_RATE / (1 + slipEnergy ^ 2)) * groundModel.staticFrictionCoefficient / tyreWidthCoeff )
         local tempCoolingRate = (data.temp[i] - ENV_TEMP) * 0.05 * TEMP_COOL_RATE
-        local staticCoolingRate = 0.05 * tempCoolingRate / treadCoef
+        local staticCoolingRate = 0.06 * tempCoolingRate / treadCoef
         local coolVelCoeff = TEMP_COOL_VEL_RATE / treadCoef *
             math.max(((angularVel / math.max(slipEnergy, 0.001)) * 0.0055) ^ 0.75 * 0.84, 1) * dt
         local skinTempDiffCore = (data.temp[4] - avgTemp) * TEMP_CHANGE_RATE_SKIN_FROM_CORE / (0.5 * treadCoef) -- Slicks hold heat better
@@ -148,13 +150,12 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     local coreTempDiffBrake = (0.3 * (brakeTemp - data.temp[4] - 0.0009 * brakeTemp ^ 2)) * TEMP_GAIN_RATE_CORE
     --                          This stops extreme brake temp numbers causing  overheating issues^
     local coreTempCooling = (data.temp[4] - ENV_TEMP) *
-    (0.05 * CORE_TEMP_VEL_COOL_RATE * (((brakeDuctSettings or 4) - 1) / 3) * airspeed + 0.05 * CORE_TEMP_COOL_RATE)
+    (0.08 * CORE_TEMP_VEL_COOL_RATE * (((brakeDuctSettings or 4) - 1) / 3) * airspeed + 0.05 * CORE_TEMP_COOL_RATE)
     data.temp[4] = data.temp[4] + (coreTempDiffSkin + coreTempDiffBrake - coreTempCooling) * TEMP_CHANGE_RATE_CORE * dt
 
     local thermalCoeff = (math.abs(avgTemp - data.working_temp) / data.working_temp) ^ 0.8
     local wear = (slipEnergy * 0.75 + netTorqueEnergy * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
         math.max(thermalCoeff, 0.75) * groundModel.staticFrictionCoefficient
-    wear = wear * treadCoef
     data.condition = math.max(data.condition - wear, 0)
     -- data.condition = 100
     tyreData[wheelID] = data
@@ -193,13 +194,22 @@ local function updateGFX(dt)
     --       if not vdata then return end
     --     brakeDuctSettings.vdata = vdata
     -- end
+    -- dump(ENV_TEMP)
+    if got_env_temp == false then
+        local be_env_temp = obj:getLastMailbox("tyreWearMailboxEnvTemp")
+        if type(be_env_temp) == "string" then
+            if type(tonumber(be_env_temp)) == "number" then
+                ENV_TEMP = tonumber(be_env_temp)
+                got_env_temp = true
+            end
+        end
+    end
     if brakeDuctSettings == nil then
-        brakeDuctSettings = obj:getLastMailbox("tyreWearMailbox")
+        brakeDuctSettings = obj:getLastMailbox("tyreWearMailboxDuct")
         if type(brakeDuctSettings) == "string" then
             brakeDuctSettings = tonumber(brakeDuctSettings)
         end
     end
-        dump(brakeDuctSettings)
 
     local stream = { data = {} }
     for i, wd in pairs(wheels.wheelRotators) do
