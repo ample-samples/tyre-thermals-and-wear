@@ -194,15 +194,6 @@ end
 -- This is a special function that runs every frame, and has full access to
 -- vehicle data for the current vehicle.
 local function updateGFX(dt)
-    -- if brakeDuctSettings.vdata == nil then
-    --     dump "getting"
-    --     local vehicleData = core_vehicle_manager.getVehicleData(vehID)
-    --       if not vehicleData then return end
-    --       local vdata = vehicleData.vdata
-    --       if not vdata then return end
-    --     brakeDuctSettings.vdata = vdata
-    -- end
-    dump(ENV_TEMP)
     if got_env_temp == false then
         local be_env_temp = obj:getLastMailbox("tyreWearMailboxEnvTemp")
         if type(be_env_temp) == "string" then
