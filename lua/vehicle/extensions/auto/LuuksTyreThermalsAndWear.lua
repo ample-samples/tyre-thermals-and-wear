@@ -374,14 +374,10 @@ local function onSettingsChanged()
     got_env_temp = false
 end
 
-local function onVehicleSpawn()
-end
-
 M.onSettingsChanged = onSettingsChanged
 M.onInit = onInit
 M.onReset = onReset
 M.updateGFX = updateGFX
 M.groundModelsCallback = groundModelsCallback
-M.onVehicleSpawn = onVehicleSpawn
 
 return M
