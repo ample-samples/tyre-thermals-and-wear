@@ -1,3 +1,4 @@
+htmlTools = require("htmlTools")
 groundModels = {}    -- Intentionally global
 groundModelsLut = {} -- Intentionally global
 beamstate = require("beamstate")
@@ -90,7 +91,9 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     local default_working_temp = (WORKING_TEMP + 1 * ENV_TEMP) * lerp(0.8, 1, treadCoef) - ENV_TEMP * 1
     local starting_temp
     -- preheat race tyres only
-    if treadCoef >= 0.0 then
+    -- TODO: preheat tyres if padMaterial is "semi-race" or "race"?
+    -- v.data.wheels[i].padMaterial
+    if treadCoef >= 0.77 then
         starting_temp = default_working_temp
     else
         starting_temp = ENV_TEMP
@@ -207,7 +210,7 @@ local function updateGFX(dt)
         local mailboxResult = obj:getLastMailbox("tyreWearMailboxDuct")
         if type(mailboxResult) == "string" then
             local tableMailboxResult = deserialize(mailboxResult)
-            if tableMailboxResult ~= nil then 
+            if tableMailboxResult ~= nil then
                 brakeDuctSettings[1] = tonumber(tableMailboxResult[1])
                 brakeDuctSettings[2] = tonumber(tableMailboxResult[2])
             end
@@ -360,9 +363,15 @@ local function onInit()
     obj:queueGameEngineLua("if luukstyrethermalsandwear then luukstyrethermalsandwear.getGroundModels() end")
 end
 
+local function vSettingsDebug()
+    local count = 0
+    htmlTools.dumpToFile(obj.partConfig, "obj")
+end
+
 local function onSettingsChanged()
     brakeDuctSettings = {-1, -1}
     got_env_temp = false
+    vSettingsDebug()
 end
 
 M.onSettingsChanged = onSettingsChanged

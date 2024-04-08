@@ -1,3 +1,5 @@
+htmlTools = require("htmlTools")
+
 local M = {}
 
 local variablesById = {}
