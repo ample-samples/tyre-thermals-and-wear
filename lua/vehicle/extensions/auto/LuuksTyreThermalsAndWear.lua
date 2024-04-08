@@ -28,7 +28,7 @@ local CORE_TEMP_COOL_RATE = 2.0       -- Modifier for how fast core temperature 
 local WEAR_RATE = 0.04
 
 local tyreGripTable = {}
-local brakeDuctSettings
+local brakeDuctSettings = {-1, -1}
 local tyreData = {}
 local wheelCache = {}
 
@@ -82,7 +82,7 @@ end
 
 -- Calculate tyre wear and thermals based on tyre data
 local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipEnergy, propulsionTorque, brakeTorque,
-                            load, angularVel, brakeTemp, tyreWidth, airspeed, deformationEnergy, g_table)
+                            load, angularVel, brakeTemp, tyreWidth, airspeed, deformationEnergy, g_table, wheel_name)
     -- Table of thermal related variables and functions.`
     -- adjust for lower weight cars which generate less force
     load = ((400 + load) * load / (100 + load) - 0.15 * load)
@@ -112,7 +112,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     -- TODO: should angularVel be included in this?
     local netTorqueEnergy = math.abs(propulsionTorque * 0.015 - brakeTorque * 0.015) * 0.01 * angularVel *
     TORQUE_ENERGY_MULTIPLIER * 3
-
+    
     for i = 1, 3 do
         local loadCoeffIndividual = weights[i] * load
         local tempDist = math.abs(data.temp[i] - data.working_temp)
@@ -149,8 +149,16 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     local coreTempDiffSkin = (avgSkin - data.temp[4]) * TEMP_CHANGE_RATE_CORE_FROM_SKIN * (0.5 * treadCoef)
     local coreTempDiffBrake = (0.3 * (brakeTemp - data.temp[4] - 0.0009 * brakeTemp ^ 2)) * TEMP_GAIN_RATE_CORE
     --                          This stops extreme brake temp numbers causing  overheating issues^
+
+    local wheel_coolingSetting
+    if string.lower(string.sub(wheel_name, 1, 1)) == "f" then
+        wheel_coolingSetting = brakeDuctSettings[1]
+    else
+        wheel_coolingSetting = brakeDuctSettings[2]
+    end
+
     local coreTempCooling = (data.temp[4] - ENV_TEMP) *
-    (0.08 * CORE_TEMP_VEL_COOL_RATE * (((brakeDuctSettings or 4) - 1) / 3) * airspeed + 0.05 * CORE_TEMP_COOL_RATE)
+    (0.08 * CORE_TEMP_VEL_COOL_RATE * (((wheel_coolingSetting or 4) - 1) / 3) * airspeed + 0.05 * CORE_TEMP_COOL_RATE)
     data.temp[4] = data.temp[4] + (coreTempDiffSkin + coreTempDiffBrake - coreTempCooling) * TEMP_CHANGE_RATE_CORE * dt
 
     local thermalCoeff = (math.abs(avgTemp - data.working_temp) / data.working_temp) ^ 0.8
@@ -194,7 +202,7 @@ local function updateGFX(dt)
     --       if not vdata then return end
     --     brakeDuctSettings.vdata = vdata
     -- end
-    -- dump(ENV_TEMP)
+    dump(ENV_TEMP)
     if got_env_temp == false then
         local be_env_temp = obj:getLastMailbox("tyreWearMailboxEnvTemp")
         if type(be_env_temp) == "string" then
@@ -204,10 +212,14 @@ local function updateGFX(dt)
             end
         end
     end
-    if brakeDuctSettings == nil then
-        brakeDuctSettings = obj:getLastMailbox("tyreWearMailboxDuct")
-        if type(brakeDuctSettings) == "string" then
-            brakeDuctSettings = tonumber(brakeDuctSettings)
+    if brakeDuctSettings[1] == -1 or brakeDuctSettings[2] == -1 or brakeDuctSettings[1] == nil or brakeDuctSettings[2] == nil then
+        local mailboxResult = obj:getLastMailbox("tyreWearMailboxDuct")
+        if type(mailboxResult) == "string" then
+            local tableMailboxResult = deserialize(mailboxResult)
+            if tableMailboxResult ~= nil then 
+                brakeDuctSettings[1] = tonumber(tableMailboxResult[1])
+                brakeDuctSettings[2] = tonumber(tableMailboxResult[2])
+            end
         end
     end
 
@@ -298,7 +310,7 @@ local function updateGFX(dt)
             loadBias = sigmoid(loadBias, 50) * 2 - 1
 
             CalcTyreWear(dt, i, groundModel, loadBias, treadCoef, slipEnergy, propulsionTorque, brakeTorque, load,
-                angularVel, brakeTemp, wheelCache[i].width, vehicleAirspeed, deformationEnergy, g_table)
+                angularVel, brakeTemp, wheelCache[i].width, vehicleAirspeed, deformationEnergy, g_table, wheelCache[i].name)
 
 
             local tyreGrip = CalculateTyreGrip(i, loadBias, treadCoef)
@@ -348,7 +360,7 @@ end
 
 local function onReset()
     tyreData = {}
-    brakeDuctSettings = nil
+    brakeDuctSettings = {-1, -1}
 
     obj:queueGameEngineLua("if luukstyrethermalsandwear then luukstyrethermalsandwear.getGroundModels() end")
 end
@@ -358,7 +370,11 @@ local function onInit()
 end
 
 local function onSettingsChanged()
-    brakeDuctSettings = nil
+    brakeDuctSettings = {-1, -1}
+    got_env_temp = false
+end
+
+local function onVehicleSpawn()
 end
 
 M.onSettingsChanged = onSettingsChanged
