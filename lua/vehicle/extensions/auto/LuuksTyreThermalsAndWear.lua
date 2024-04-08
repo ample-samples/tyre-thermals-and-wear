@@ -371,7 +371,7 @@ end
 local function onSettingsChanged()
     brakeDuctSettings = {-1, -1}
     got_env_temp = false
-    vSettingsDebug()
+    -- vSettingsDebug()
 end
 
 M.onSettingsChanged = onSettingsChanged
