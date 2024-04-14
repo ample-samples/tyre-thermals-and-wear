@@ -85,7 +85,7 @@ local function TempRingsToAvgTemp(temps, loadBias)
 end
 
 -- Calculate tyre wear and thermals based on tyre data
-local function CalcTyreWear(dt, i, groundModel, loadBias, treadCoef, slipEnergy, propulsionTorque, brakeTorque,
+local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipEnergy, propulsionTorque, brakeTorque,
                             load, angularVel, brakeTemp, tyreWidth, airspeed, deformationEnergy, g_table, wheel_name)
     -- Table of thermal related variables and functions.`
     -- adjust for lower weight cars which generate less force
@@ -96,7 +96,7 @@ local function CalcTyreWear(dt, i, groundModel, loadBias, treadCoef, slipEnergy,
     -- preheat race tyres only
     -- TODO: preheat tyres if padMaterial is "semi-race" or "race"?
     -- v.data.wheels[i].padMaterial
-    if isRaceBrake[i] then
+    if isRaceBrake[wheelID] then
         starting_temp = default_working_temp
     else
         starting_temp = ENV_TEMP
@@ -108,7 +108,7 @@ local function CalcTyreWear(dt, i, groundModel, loadBias, treadCoef, slipEnergy,
         condition = 100, -- 100% perfect tyre condition
         lastTyregrip = 1
     }
-    local data = tyreData[i] or defaultTyreData
+    local data = tyreData[wheelID] or defaultTyreData
 
     local tyreWidthCoeff = (3.5 * tyreWidth) * 0.5 + 0.5
 
@@ -130,11 +130,11 @@ local function CalcTyreWear(dt, i, groundModel, loadBias, treadCoef, slipEnergy,
             3 * weights[i]
         tempGain = tempGain * (math.max(groundModel.staticFrictionCoefficient - 0.5, 0.1) * 2)
             -- Temp gain from wheelspin / lockup
-            + (((0.003 * slipEnergy ^ 2 * loadCoeffIndividual) * TEMP_SLIP_GAIN_RATE * (math.sqrt(tyreGripTable[i] or 1))
+            + (((0.003 * slipEnergy ^ 3 * loadCoeffIndividual) * TEMP_SLIP_GAIN_RATE * (math.sqrt(tyreGripTable[i] or 1))
                 -- Temp gain from work done in corner
                 -- TODO: Test horizontal G * weights[i]
 
-                + 0.15 * relative_work * TEMP_WORK_GAIN_RATE / (1 + slipEnergy ^ 2)) * groundModel.staticFrictionCoefficient / tyreWidthCoeff)
+                + 0.2 * relative_work * TEMP_WORK_GAIN_RATE / (1 + slipEnergy ^ 2)) * groundModel.staticFrictionCoefficient / tyreWidthCoeff)
         local tempCoolingRate = (data.temp[i] - ENV_TEMP) * 0.05 * TEMP_COOL_RATE
         local staticCoolingRate = 0.06 * tempCoolingRate / treadCoef
         local coolVelCoeff = TEMP_COOL_VEL_RATE / treadCoef *
@@ -174,11 +174,11 @@ local function CalcTyreWear(dt, i, groundModel, loadBias, treadCoef, slipEnergy,
         math.max(thermalCoeff, 0.75) * groundModel.staticFrictionCoefficient
     data.condition = math.max(data.condition - wear, 0)
     -- data.condition = 100
-    tyreData[i] = data
+    tyreData[wheelID] = data
 end
 
-local function CalculateTyreGrip(i, loadBias, treadCoef)
-    local data = tyreData[i]
+local function CalculateTyreGrip(wheelID, loadBias, treadCoef)
+    local data = tyreData[wheelID]
 
     local avgTemp = TempRingsToAvgTemp(data.temp, loadBias)
 
@@ -195,7 +195,7 @@ local function CalculateTyreGrip(i, loadBias, treadCoef)
     tyreGrip = tyreGrip * (1 - math.abs((avgTemp - 90) / 1500))
 
     -- TODO: Experiment with including a contact patch size based on loadBias
-    tyreGripTable[i] = tyreGrip
+    tyreGripTable[wheelID] = tyreGrip
     return tyreGrip
 end
 
