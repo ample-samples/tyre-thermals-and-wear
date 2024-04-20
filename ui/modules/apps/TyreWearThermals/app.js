@@ -163,7 +163,7 @@ angular.module("beamng.apps")
                             ctx.fillStyle = "hsla(" + coreHue + ",82%,56%,1)";
                             coreTempIsDisplayed = 1;
                         }
-                    roundRect(ctx, cx - w / 24.0 - w / 1.75 * (right * 2.0 - 1.0), y + h * 0.2, w / 12.0, h * 0.6, 3.0, true);
+                    roundRect(ctx, cx - w / 12.0 - w / 1.75 * (right * 2.0 - 1.0), y + h * 0.2, w / 6, h * 0.6, 3.0, true);
                 }
 
                 var dataStream = streams.TyreWearThermals;

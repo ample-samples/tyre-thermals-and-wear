@@ -2,7 +2,6 @@ local M = {}
 
 function getGroundModels()
     local cmd = "groundModels = {"
-    local i = 1
     for k, v in pairs(core_environment.groundModels) do
         local name = tostring(k)
         if #name > 0 then
