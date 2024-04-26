@@ -32,40 +32,40 @@ local function onVehicleSpawned(vehID)
 				name = "$WheelCoolingDuctFront",
 				category = "Brakes",
 				title = "Front Cooling ducts",
-				description = "Controls the amount of air passing over the inner wheel. 1 - Fully closed, 6 - Fully open",
+				description = "Controls the amount of air passing over the brake. 1%=Fully closed, 100%=Fully open",
 				type = "range",
-				unit = "setting",
+				unit = "%",
 
 				min = 1,
 				minDis = 1,
-				max = 6,
-				maxDis = 6,
+				max = 100,
+				maxDis = 100,
 				step = 1,
 				stepDis = 1,
-				default = 4,
-				val = brakeSetting[1] or 4
+				default = 12,
+				val = brakeSetting[1] or 12
 			},
 			["$WheelCoolingDuctRear"] = {
 				name = "$WheelCoolingDuctRear",
 				category = "Brakes",
 				title = "Rear Cooling ducts",
-				description = "Controls the amount of air passing over the inner wheel. 1 - Fully closed, 6 - Fully open",
+				description = "Controls the amount of air passing over the brake. 1%=Fully closed, 100%=Fully open",
 				type = "range",
-				unit = "setting",
+				unit = "%",
 
 				min = 1,
 				minDis = 1,
-				max = 6,
-				maxDis = 6,
+				max = 100,
+				maxDis = 100,
 				step = 1,
 				stepDis = 1,
-				default = 4,
-				val = brakeSetting[2] or 4
+				default = 12,
+				val = brakeSetting[2] or 12
 			}
 		}
 	else
-		variablesById[vehID]["$WheelCoolingDuctFront"].val = brakeSetting[1] or 4
-		variablesById[vehID]["$WheelCoolingDuctRear"].val = brakeSetting[2] or 4
+		variablesById[vehID]["$WheelCoolingDuctFront"].val = brakeSetting[1] or 12
+		variablesById[vehID]["$WheelCoolingDuctRear"].val = brakeSetting[2] or 12
 	end
 
 	tableMerge(vdata.variables, variablesById[vehID])
@@ -92,7 +92,7 @@ local function onSettingsChanged()
 	if not be then return end
 	if not core_vehicle_manager.getPlayerVehicleData() then return end
 	brakeSetting = {}
-	local mailboxSend = {core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuctFront"].val or 4, core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuctRear"].val or 4}
+	local mailboxSend = {core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuctFront"].val or 12, core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuctRear"].val or 12}
 	be:sendToMailbox("tyreWearMailboxDuct", serialize(mailboxSend))
 	-- dump(core_environment.getTemperatureK() .. " K")
 	local env_temp = tonumber(core_environment.getTemperatureK()) - 273.15
