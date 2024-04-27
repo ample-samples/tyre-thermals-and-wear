@@ -39,7 +39,7 @@ local wheelCache = {}
 
 local totalTimeMod60 = 0
 
-local degubStepFinished = false
+local degubStepFinished = true
 
 -- Research notes on tyre thermals and wear:
 -- - Thermals have an obvious impact on grip, but not as much as wear.
