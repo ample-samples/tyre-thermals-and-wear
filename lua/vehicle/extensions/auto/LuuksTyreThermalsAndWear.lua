@@ -31,7 +31,7 @@ local TEMP_GAIN_RATE_CORE = 0.29             -- Modifier for how fast core tempe
 local CORE_TEMP_VEL_COOL_RATE = 0.07         -- Modifier for how fast core temperature cools down from moving air
 local CORE_TEMP_COOL_RATE = 1.5              -- Modifier for how fast core temperature cools down from static air/IR radiation
 
-local WEAR_RATE = 0.04
+local WEAR_RATE = 0.042
 
 local tyreGripTable = {}
 local brakeDuctSettings = { -1, -1 }
@@ -44,7 +44,7 @@ local wheelCache = {}
 
 local totalTimeMod60 = 0
 
-local degubStepFinished = false
+local degubStepFinished = true
 
 -- Research notes on tyre thermals and wear:
 -- - Thermals have an obvious impact on grip, but not as much as wear.
@@ -96,7 +96,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     -- preheat race tyres only
     -- TODO: preheat tyres if padMaterial is "semi-race" or "race"?
     -- v.data.wheels[i].padMaterial
-    if isRaceBrake[wheelID] then
+    if isRaceBrake[wheelID] or treadCoef > 0.974 then
         starting_temp = default_working_temp
     else
         starting_temp = ENV_TEMP
@@ -165,7 +165,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     local avgSkin = (data.temp[1] + data.temp[2] + data.temp[3]) / 3
     local coreTempDiffSkin = (avgSkin - data.temp[4]) * TEMP_CHANGE_RATE_CORE_FROM_SKIN * (0.5 * treadCoef)
     local coreTempDiffBrake = (0.3 * (brakeTemp - data.temp[4] - 0.0009 * brakeTemp ^ 2)) * TEMP_GAIN_RATE_CORE
-    --                          This stops extreme brake temp numbers causing  overheating issues^
+    --   This stops extreme brake temp numbers causing  overheating issues^^^
 
     local coreTempCooling = (data.temp[4] - ENV_TEMP) *
         (0.08 * CORE_TEMP_VEL_COOL_RATE * math.sqrt(airspeed) + 0.05 * CORE_TEMP_COOL_RATE) *
