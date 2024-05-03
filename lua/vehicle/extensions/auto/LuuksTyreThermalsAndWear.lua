@@ -110,6 +110,14 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
         brakeCooling = baseBrakeCoolings[wheelID],
     }
 
+    local vehNotParked = 1
+    if airspeed < 1 and angularVel < 0.4 then
+        vehNotParked = 0
+    end
+
+    print("vehNotParked: " .. vehNotParked)
+    print("angularVel: " .. angularVel)
+
     local brake_coolingSetting
     if string.lower(string.sub(wheel_name, 1, 1)) == "f" then
         brake_coolingSetting = brakeDuctSettings[1]
@@ -125,7 +133,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     local weights = CalcBiasWeights(loadBias)
     local avgTemp = TempRingsToAvgTemp(data.temp, loadBias)
     -- TODO: should angularVel be included in this?
-    local netTorqueEnergy = math.abs(propulsionTorque * 0.015 - brakeTorque * 0.025) * 0.01 * angularVel *
+    local netTorqueEnergy = vehNotParked * math.abs(propulsionTorque * 0.015 - brakeTorque * 0.025) * 0.1 *
         TORQUE_ENERGY_MULTIPLIER * 3
 
     for i = 1, 3 do
@@ -174,8 +182,9 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
 
     local thermalCoeff = (math.abs(avgTemp - data.working_temp) / data.working_temp) ^ 0.8
 
-    local wear = (slipEnergy * 0.75 + netTorqueEnergy * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
-        math.max(thermalCoeff, 0.75) * groundModel.staticFrictionCoefficient
+    local wear = (slipEnergy * 0.75 + (vehNotParked * math.abs(propulsionTorque * 0.008 - brakeTorque * 0.025) * 0.1 *
+        TORQUE_ENERGY_MULTIPLIER * 3) * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
+        math.max(thermalCoeff, 0.75) * groundModel.staticFrictionCoefficient / tyreWidthCoeff
     data.condition = math.max(data.condition - wear, 0)
     -- data.condition = 100
     tyreData[wheelID] = data
