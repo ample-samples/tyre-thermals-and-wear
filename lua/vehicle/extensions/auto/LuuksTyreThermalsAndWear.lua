@@ -124,7 +124,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     else
         brake_coolingSetting = brakeDuctSettings[2]
     end
-    wheelCache[wheelID].brakeCooling = (((brake_coolingSetting or 12) - 1) / 12) * baseBrakeCoolings[wheelID]
+    wheelCache[wheelID].brakeCooling = (((brake_coolingSetting or 12) - 1) / 12) * (baseBrakeCoolings[wheelID] or 0.5)
 
     local data = tyreData[wheelID] or defaultWheelData
 
@@ -215,6 +215,7 @@ end
 -- This is a special function that runs every frame, and has full access to
 -- vehicle data for the current vehicle.
 local function updateGFX(dt)
+    dump("updateGFX")
     if got_env_temp == false then
         local be_env_temp = obj:getLastMailbox("tyreWearMailboxEnvTemp")
         if type(be_env_temp) == "string" then
@@ -423,7 +424,7 @@ local function onReset()
     -- dump("getting pad materials")
     for i = 0, #v.data.wheels, 1 do
         padMaterials[i] = ""
-        if ( v and v.data and v.data.wheels[i] and v.data.wheels[i] then
+        if ( v and v.data and v.data.wheels[i] and v.data.wheels[i]) then
             padMaterials[i] = v.data.wheels[i].padMaterial
         end
         -- dump(padMaterials[i])
