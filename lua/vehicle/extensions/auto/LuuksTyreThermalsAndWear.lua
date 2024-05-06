@@ -215,7 +215,6 @@ end
 -- This is a special function that runs every frame, and has full access to
 -- vehicle data for the current vehicle.
 local function updateGFX(dt)
-    dump("updateGFX")
     if got_env_temp == false then
         local be_env_temp = obj:getLastMailbox("tyreWearMailboxEnvTemp")
         if type(be_env_temp) == "string" then
