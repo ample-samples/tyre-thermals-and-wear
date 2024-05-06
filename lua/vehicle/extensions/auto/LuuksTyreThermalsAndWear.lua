@@ -115,8 +115,8 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
         vehNotParked = 0
     end
 
-    print("vehNotParked: " .. vehNotParked)
-    print("angularVel: " .. angularVel)
+    -- print("vehNotParked: " .. vehNotParked)
+    -- print("angularVel: " .. angularVel)
 
     local brake_coolingSetting
     if string.lower(string.sub(wheel_name, 1, 1)) == "f" then
@@ -183,7 +183,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     local thermalCoeff = (math.abs(avgTemp - data.working_temp) / data.working_temp) ^ 0.8
 
     local wear = (slipEnergy * 0.75 + (vehNotParked * math.abs(propulsionTorque * 0.008 - brakeTorque * 0.025) * 0.1 *
-        TORQUE_ENERGY_MULTIPLIER * 3) * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
+            TORQUE_ENERGY_MULTIPLIER * 3) * 0.08 + angularVel * 0.05) * WEAR_RATE * dt *
         math.max(thermalCoeff, 0.75) * groundModel.staticFrictionCoefficient / tyreWidthCoeff
     data.condition = math.max(data.condition - wear, 0)
     -- data.condition = 100
@@ -369,7 +369,6 @@ local function updateGFX(dt)
                 -- dump(v.data)
                 for key, value in pairs(v.data) do
                     print(key)
-
                 end
 
                 local wheelRotatorsKeys = {}
@@ -421,9 +420,13 @@ local function onReset()
         "full-race",
         "carbon-ceramic"
     }
+    -- dump("getting pad materials")
     for i = 0, #v.data.wheels, 1 do
-        padMaterials[i] = v.data.wheels[i].padMaterial
-        dump(padMaterials[i])
+        padMaterials[i] = ""
+        if ( v and v.data and v.data.wheels[i] and v.data.wheels[i] then
+            padMaterials[i] = v.data.wheels[i].padMaterial
+        end
+        -- dump(padMaterials[i])
     end
     for i = 0, #padMaterials, 1 do
         isRaceBrake[i] = tableContains(racePadMaterials, padMaterials[i])
@@ -447,10 +450,13 @@ local function onSettingsChanged()
     padMaterials = {}
     isRaceBrake = {}
     for i = 0, #v.data.wheels, 1 do
-        padMaterials[i] = v.data.wheels[i].padMaterial
-    end
-    for i = 0, #padMaterials, 1 do
-        isRaceBrake[i] = padMaterials[i] == "race" or padMaterials[i] == "semi-race" or padMaterials[i] == "full-race"
+        if v and v.data and v.data.wheels[i] and v.data.wheels[i].padMaterial then
+            padMaterials[i] = v.data.wheels[i].padMaterial
+        end
+        for i = 0, #padMaterials, 1 do
+            isRaceBrake[i] = padMaterials[i] == "race" or padMaterials[i] == "semi-race" or
+            padMaterials[i] == "full-race"
+        end
     end
     -- vSettingsDebug()
 end
@@ -466,4 +472,3 @@ M.onVehicleSpawned = onVehicleSpawned
 M.groundModelsCallback = groundModelsCallback
 
 return M
-
