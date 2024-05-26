@@ -3,7 +3,10 @@ htmlTools = require("htmlTools")
 groundModels = {}    -- Intentionally global
 groundModelsLut = {} -- Intentionally global
 beamstate = require("beamstate")
+
+local tyre_data = require("tyreData")
 local tyre_utils = require("tyre_utils")
+
 
 local lerp = tyre_utils.lerp
 local sigmoid = tyre_utils.sigmoid
@@ -197,15 +200,17 @@ local function CalculateTyreGrip(wheelID, loadBias, treadCoef)
 
     local tyreGrip = 1
     tyreGrip = tyreGrip * (math.min(data.condition / 97, 1) ^ 3.5 * 0.22 + 0.78)
-    -- Grip of tyres with high treadCoef are affected more by temperature change
-    local tempDist = math.abs(avgTemp - data.working_temp) ^ treadCoef
-    -- Insane calculation to make temps forgiving when around ideal temperature
-    -- but linear between 10 and 25 degrees from ideal
-    local tempLerpValue = -1 / ((1 + 0.00001 * (-2 + (0.6 * tempDist - 2) ^ 2) ^ 2)) + 1
-    -- tempLerpValue = -1 / (1 + 0.005 * tempDist ^ 2) + 1
-    tyreGrip = tyreGrip * lerp(1, 0.9, tempLerpValue)
-    -- Keep tyre grip relatively the same at usual temps but lower at extremes
-    tyreGrip = tyreGrip * (1 - math.abs((avgTemp - 90) / 1500))
+        -- Grip of tyres with high treadCoef are affected more by temperature change
+        -- local tempDist = math.abs(avgTemp - data.working_temp) ^ treadCoef
+        -- -- Insane calculation to make temps forgiving when around ideal temperature
+        -- -- but linear between 10 and 25 degrees from ideal
+        -- local tempLerpValue = -1 / ((1 + 0.00001 * (-2 + (0.6 * tempDist - 2) ^ 2) ^ 2)) + 1
+        -- -- tempLerpValue = -1 / (1 + 0.005 * tempDist ^ 2) + 1
+        -- tyreGrip = tyreGrip * lerp(1, 0.9, tempLerpValue)
+        -- -- Keep tyre grip relatively the same at usual temps but lower at extremes
+        -- tyreGrip = tyreGrip * (1 - math.abs((avgTemp - 90) / 1500))
+    tyreGrip = tyreGrip * (tyre_data.tempToGrip.slicks[math.floor(avgTemp)] or 0.96)
+    -- print ("tyreGrip  " .. (tyreGrip or "not found") )
 
     -- TODO: Experiment with including a contact patch size based on loadBias
     tyreGripTable[wheelID] = tyreGrip
