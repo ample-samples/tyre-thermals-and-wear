@@ -1,0 +1,8 @@
+{
+    "workspace.library": [
+        "/home/todd/.local/share/nvim/plugged/neodev.nvim/types/stable",
+        "/usr/share/nvim/runtime/lua",
+        "/home/todd/Games/SteamLibrary/steamapps/compatdata/284160/pfx/drive_c/users/steamuser/AppData/Local/BeamNG.drive/0.28/mods/unpacked/luukstyrethermalsandwear/lua",
+        "${3rd}/luv/library"
+    ]
+}
