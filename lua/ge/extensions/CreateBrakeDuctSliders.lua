@@ -15,10 +15,10 @@ local function onVehicleSpawned(vehID)
 	local partConfig = be:getObjectByID(vehID).partConfig -- either serialized table or a pathname
 	local tablePartConfig = jsonReadFile(partConfig) or deserialize(partConfig)
 	-- dump(tablePartConfig)
-	if tablePartConfig and tablePartConfig.vars and tablePartConfig.vars["$WheelCoolingDuctFront"] then
+	if tablePartConfig.vars and tablePartConfig.vars["$WheelCoolingDuctFront"] then
 		brakeSetting[1] = tablePartConfig.vars["$WheelCoolingDuctFront"]
 	end
-	if tablePartConfig and tablePartConfig.vars and tablePartConfig.vars["$WheelCoolingDuctRear"] then
+	if tablePartConfig.vars and tablePartConfig.vars["$WheelCoolingDuctRear"] then
 		brakeSetting[2] = tablePartConfig.vars["$WheelCoolingDuctRear"]
 	end
 

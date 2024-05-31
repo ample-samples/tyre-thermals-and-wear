@@ -11,7 +11,7 @@ local function lerp(a, b, t)
     return a + (b - a) * t
 end
 
-local function getVehWeight() 
+local function getVehWeight()
 
 end
 
