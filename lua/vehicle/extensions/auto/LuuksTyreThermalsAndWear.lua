@@ -47,7 +47,7 @@ local wheelCache = {}
 
 local totalTimeMod60 = 0
 
-local degubStepFinished = true
+local debugStepFinished = true
 
 -- Research notes on tyre thermals and wear:
 -- - Thermals have an obvious impact on grip, but not as much as wear.
@@ -94,15 +94,19 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     -- adjust for lower weight cars which generate less force
     load = ((400 + load) * load / (100 + load) - 0.15 * load)
     -- local STARTING_TEMP = ENV_TEMP + 10
-    local default_working_temp = (WORKING_TEMP + 1 * ENV_TEMP) * lerp(0.8, 1, treadCoef) - ENV_TEMP * 1
+    local mapTemp
     local starting_temp
+    if powertrain ~= nil then
+        mapTemp = powertrain.currentEnvTemperatureCelsius or ENV_TEMP
+        starting_temp = powertrain.currentEnvTemperatureCelsius or ENV_TEMP
+    end
+    local default_working_temp = lerp(90, 97, math.max(0, (1 - (1 - treadCoef) / 0.45) - 0.5) * 2)
     -- preheat race tyres only
     -- TODO: preheat tyres if padMaterial is "semi-race" or "race"?
     -- v.data.wheels[i].padMaterial
     if isRaceBrake[wheelID] or treadCoef > 0.974 then
         starting_temp = default_working_temp
     else
-        starting_temp = ENV_TEMP
     end
 
     local defaultWheelData = {
@@ -180,7 +184,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
 
     local coreTempCooling = (data.temp[4] - ENV_TEMP) *
         (0.08 * CORE_TEMP_VEL_COOL_RATE * math.sqrt(airspeed) + 0.05 * CORE_TEMP_COOL_RATE) *
-        lerp(0.8, 1, brake_coolingSetting / 12)
+        lerp(0.8, 1.2, brake_coolingSetting / 12)
     data.temp[4] = data.temp[4] + (coreTempDiffSkin + coreTempDiffBrake - coreTempCooling) * TEMP_CHANGE_RATE_CORE * dt
 
     local thermalCoeff = (math.abs(avgTemp - data.working_temp) / data.working_temp) ^ 0.8
@@ -199,18 +203,22 @@ local function CalculateTyreGrip(wheelID, loadBias, treadCoef)
     local avgTemp = TempRingsToAvgTemp(data.temp, loadBias)
 
     local tyreGrip = 1
-    tyreGrip = tyreGrip * 0.7701504+0.002476352*data.condition+0.0001259966*data.condition^(2)-0.000002465426*data.condition^(3)+1.187875*10^(-8)*data.condition^(4)
+    tyreGrip = tyreGrip * 0.7701504 + 0.002476352 * data.condition + 0.0001259966 * data.condition ^ (2) -
+        0.000002465426 * data.condition ^ (3) + 1.187875 * 10 ^ (-8) * data.condition ^ (4)
 
-        -- Grip of tyres with high treadCoef are affected more by temperature change
-        -- local tempDist = math.abs(avgTemp - data.working_temp) ^ treadCoef
-        -- -- Insane calculation to make temps forgiving when around ideal temperature
-        -- -- but linear between 10 and 25 degrees from ideal
-        -- local tempLerpValue = -1 / ((1 + 0.00001 * (-2 + (0.6 * tempDist - 2) ^ 2) ^ 2)) + 1
-        -- -- tempLerpValue = -1 / (1 + 0.005 * tempDist ^ 2) + 1
-        -- tyreGrip = tyreGrip * lerp(1, 0.9, tempLerpValue)
-        -- -- Keep tyre grip relatively the same at usual temps but lower at extremes
-        -- tyreGrip = tyreGrip * (1 - math.abs((avgTemp - 90) / 1500))
-    tyreGrip = tyreGrip * (tyre_data.tempToGrip.slicks[math.floor(avgTemp)] or 0.96)
+    local raceTempGrip = tyre_utils.slicksTempToGrip(avgTemp)
+    local streetTempGrip = tyre_utils.streetTempToGrip(avgTemp)
+
+    -- local treadCoef = 1.0 - wheelCache[i].treadCoef * 0.45
+    local gripTempModifier = tyre_utils.lerp(streetTempGrip, raceTempGrip, math.max(0, (1 - (1 - treadCoef) / 0.45) - 0.5) * 2)
+    -- dump("grip calc")
+    -- dump("lerp coef", math.max(0, (1 - (1 - treadCoef) / 0.45) - 0.5) * 2)
+    -- dump("raceTempGrip", raceTempGrip)
+    -- dump("streetTempGrip", streetTempGrip)
+    -- dump("gripTempModifier", gripTempModifier)
+
+    tyreGrip = tyreGrip * gripTempModifier
+    -- tyreGrip = tyreGrip * (tyre_data.tempToGrip.slicks[math.floor(avgTemp)] or 0.96)
     -- print ("tyreGrip  " .. (tyreGrip or "not found") )
 
     -- TODO: Experiment with including a contact patch size based on loadBias
@@ -365,7 +373,18 @@ local function updateGFX(dt)
                 beamstate.deflateTire(i)
             end
 
-            if not degubStepFinished then
+            if not debugStepFinished then
+                dump('temp')
+                dump(powertrain.currentEnvTemperatureCelsius)
+                dump('powertrain')
+                for key, value in pairs(powertrain) do
+                    print(key)
+                end
+                dump('metatable')
+                dump(getmetatable(powertrain))
+                if powertrain and powertrain.getEngineData then
+                    dump(powertrain.getEngineData().mainEngine)
+                end
                 -- dump(wheel)
                 -- dump(wheels.wheelRotators[i])
                 -- wheels.wheelRotators[i].brakeCoolingArea = 1
@@ -373,19 +392,19 @@ local function updateGFX(dt)
                 -- dump(nodes.calculateNodesWeight(v.data.nodes))
 
                 -- dump(v.data)
-                for key, value in pairs(v.data) do
-                    print(key)
-                end
+                -- for key, value in pairs(v.data) do
+                --     print(key)
+                -- end
 
-                local wheelRotatorsKeys = {}
-                local debugValue = wheels.rotators
-                for key, value in pairs(debugValue) do
-                    wheelRotatorsKeys[key] = ""
-                    print(key)
-                end
-                htmlTools.dumpToFile(wheelRotatorsKeys, "wheels")
+                -- local wheelRotatorsKeys = {}
+                -- local debugValue = wheels.rotators
+                -- for key, value in pairs(debugValue) do
+                --     wheelRotatorsKeys[key] = ""
+                --     print(key)
+                -- end
+                -- htmlTools.dumpToFile(wheelRotatorsKeys, "wheels")
 
-                degubStepFinished = true
+                debugStepFinished = true
                 dump("debug step finished")
             end
 
@@ -429,7 +448,7 @@ local function onReset()
     -- dump("getting pad materials")
     for i = 0, #v.data.wheels, 1 do
         padMaterials[i] = ""
-        if ( v and v.data and v.data.wheels[i] and v.data.wheels[i]) then
+        if (v and v.data and v.data.wheels[i] and v.data.wheels[i]) then
             padMaterials[i] = v.data.wheels[i].padMaterial
         end
         -- dump(padMaterials[i])
@@ -461,7 +480,7 @@ local function onSettingsChanged()
         end
         for i = 0, #padMaterials, 1 do
             isRaceBrake[i] = padMaterials[i] == "race" or padMaterials[i] == "semi-race" or
-            padMaterials[i] == "full-race"
+                padMaterials[i] == "full-race"
         end
     end
     -- vSettingsDebug()
