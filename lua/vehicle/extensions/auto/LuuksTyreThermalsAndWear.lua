@@ -129,7 +129,7 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
     }
 
     local vehNotParked = 1
-    if airspeed < 1 and angularVel < 0.4 then
+    if angularVel < 0.1 and g_table.g_horiz < 0.1 then
         vehNotParked = 0
     end
 
@@ -179,7 +179,6 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
         local tempCoolingRate = (data.temp[i] - ENV_TEMP) * 0.05 * TEMP_COOL_RATE
         local staticCoolingRate = 0.06 * tempCoolingRate / treadCoef
         -- TODO: * dt should not be in this calculation
-        dump(dt)
         local velCoolingCoeff = math.sqrt(airspeed) * TEMP_COOL_VEL_RATE / treadCoef
         local skinTempDiffCore = (data.temp[4] - avgTemp) * TEMP_CHANGE_RATE_SKIN_FROM_CORE /
             (0.5 * treadCoef) -- Slicks hold heat better
@@ -375,13 +374,15 @@ local function updateGFX(dt)
                 table.insert(temps, math.floor(tyreData[i].temp[j] * 10) / 10)
             end
             -- dump(temps)
+            -- TODO: assignment to be replaced when the softnessCoef of the tyre is gotten
+            local initalSoftnessCoef = 1
             for j = 1, #wheels.wheelRotators[i].nodes, 1 do
                 -- local currentTyreNode = v.data.nodes[wheels.wheelRotators[0].nodes[i]]
                 v.data
                 .nodes[wheels
                 .wheelRotators[i]
                 .nodes[j]]
-                .softnessCoef = 0.7 * (tyreData[i].temp[4]  / 97)
+                .softnessCoef = initalSoftnessCoef * (tyreData[i].temp[4]  / 97)
                 -- dump(v.data.nodes[wheels.wheelRotators[0].nodes[i]])
             end
             local condition = math.floor(tyreData[i].condition * 10) / 10 * isNotDeflated
