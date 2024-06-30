@@ -379,7 +379,7 @@ local function updateGFX(dt)
                 .nodes[wheels
                 .wheelRotators[i]
                 .nodes[j]]
-                .softnessCoef = 0.7 * (TempRingsToAvgTemp(temps, 0)  / 97) ^ 6
+                .softnessCoef = 0.7 * (tyreData[i].temp[4]  / 97)
                 -- dump(v.data.nodes[wheels.wheelRotators[0].nodes[i]])
             end
             local condition = math.floor(tyreData[i].condition * 10) / 10 * isNotDeflated
