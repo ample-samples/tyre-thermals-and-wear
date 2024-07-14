@@ -19,6 +19,22 @@ local function streetTempToGrip(temp)
 	return 0.9817336 + 0.000429597 * temp - 0.000002799886 * temp ^ (2) + (3.080513 * 10 ^ (-9)) * temp ^ (3)
 end
 
+local function CalcBiasWeights(loadBias)
+    -- tyreStiffnessFactor controls how evenly the tyre supports weight as camber changes.
+    -- Higher is more support and less even support
+    local tyreStiffnessFactor = 0.25
+    local weightCenter = -1 / (1 + 5 * (loadBias ^ -2)) + 1
+    local weightLeft = math.max(-1 * loadBias + 1,0)
+    local weightRight = math.max(1 * loadBias + 1,0)
+
+    local weightSum = weightLeft + weightCenter + weightRight
+    return {
+        weightLeft / weightSum,
+        weightCenter / weightSum,
+        weightRight / weightSum
+    }
+end
+
 local function updateNodeStribeck(currentTyreNode)
 	local exampleNode = {
 		beamDeform = 43600,
@@ -111,6 +127,7 @@ end
 
 M.slicksTempToGrip = slicksTempToGrip
 M.streetTempToGrip = streetTempToGrip
+M.CalcBiasWeights = CalcBiasWeights
 M.sigmoid = sigmoid
 M.lerp = lerp
 return M
