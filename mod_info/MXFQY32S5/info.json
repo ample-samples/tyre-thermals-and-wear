@@ -1,49 +1,65 @@
 {
     "attachments": [],
     "resource_id": 29934,
-    "current_version_id": 52871,
+    "current_version_id": 55445,
     "download_count": 0,
-    "resource_version_id": 52882,
-    "version_string": "0.18",
-    "last_update": 1708429242,
-    "rating_avg": 0,
+    "resource_version_id": 59569,
+    "version_string": "0.18.2",
+    "last_update": 1718351214,
+    "rating_avg": 4.72222,
     "rating_count": 0,
     "rating_sum": 0,
     "resource_category_id": 7,
-    "resource_date": 1708429242,
-    "review_count": 0,
+    "resource_date": 1708690907,
+    "review_count": 20,
     "tag_line": "A continuation of Luuks Tyre Thermals and Wear Mod",
-    "update_count": 0,
-    "path": "MXFQY32S5\/52871\/",
-    "filename": "tyrethermalsandwear_v015.zip",
-    "title": "Tyre Thermals and Wear Redux",
+    "update_count": 5,
+    "path": "MXFQY32S5\/55445\/",
+    "filename": "tyrewearandthermals.zip",
+    "title": "Tyre Wear and Thermals Redux",
     "user_id": 393895,
     "username": "Zesty_Maple98",
     "tagid": "MXFQY32S5",
-    "message": "This reupload contains tyre thermals balancing and tyre popping from low tyre condition.\nSee below for the original mod description from Luuk\n[URL]https:\/\/www.beamng.com\/resources\/luuks-tyre-thermals-and-wear-mod.26947\/[\/URL]\n[HR][\/HR]\n[B]My friends and enemies. It's time for tyre thermals and tyre wear![\/B]\nLet me introduce you to the first publicly available mod that provides both tyre thermals and tyre wear!\nHave you ever felt like doing a burnout didn't destroy your tyres enough? Have you ever thought \"wow, wouldn't it be cool if I had to manage my tyre wear\"? No? Well fear not, this mod is still a great option for you! With the extra realism this mod adds, you can finally satisfy that inner simrace-nerd in you.\n\nNew tyre popping! (The full clip is a bit over a minute):\n[MEDIA=vimeo]915152516[\/MEDIA]\n\nHeat buildup from drifting\n[IMG]https:\/\/i.imgur.com\/mAOqj95.png[\/IMG]\n\n[I]Reworked UI from v1.0.1[\/I]\n[IMG]https:\/\/cdn.discordapp.com\/attachments\/1104452581675237396\/1123561859790946304\/image.png[\/IMG]\n[I]\n[I]Showcase video for v0.1 by [USER=477185]@bowtiedylan[\/USER][\/I]\n[MEDIA=youtube]_VdeqLUeHCg[\/MEDIA][\/I]\n\n\n[B]Mod features:[\/B]\n- [B]Multiplayer compatible[\/B];\n- Tyre thermals based on several factors (tyre slip, load camber);\n- Tyre wear based on similar factors, and the tyre thermals;\n- 4 temperature zones (inner, center, outer and core);\n- Dynamic tyre grip based on thermals and wear;\n- Support for various compounds (standards, sports and race tyres);\n\n[B]Planned features:[\/B]\n- Various user settings for brake duct cooling, preheating tyres etc.\n- Wet tyre support;\n- Hard\/medium\/soft compound support;\n- Accompanying BeamMP plugin for pitstops\/tire swaps;\n\n[B]Contributors:[\/B]\n- [USER=53119]@lucky4luuk[\/USER]: For the majority of the work in the mod up to this point\n- [USER=393895]@Zesty_Maple98[\/USER] (that's me ;) ): Incredible work on update v1.0.1, retuning the overall behaviour, adding core wheel temps and using brake temps to affect core wheel temps. Thank you so much for your contribution!\n- [USER=531843]@Redknee[\/USER]: Helped get me up and running with the UI, providing concept art and valuable feedback!\n[B]\nKnown issues:[\/B]\n- Some drivetrain configurations (i.e. FWD) cause excessive heat build up in the driven wheels. This will be fixed with a brake duct update\n\nChangelog:\nv0.15: Rebalanced heat accumulation and street tyre's grip due to temp. also only race tyres start preheated\nv0.14: New versioning system, tyre popping and thermals rework due to tyre slipping. Heat also builds more evenly across a tyre instead of building up in the center ring;\nv1.3: Updated to BeamNG 0.31;\nv1.2: Broken\/deflated wheels now show up as 0% in the UI app. Tyre width now contributes to the overall calculation, fixing the behaviour for lightweight cars with small tyres and vice versa;\nv1.1: Forced brake temps to default to environment temperature if they can't be read. Fixes bug with AI and wheels without brakes;\nv1.0.1: The big release! UI reworked, behaviour entirely retuned and wheel core temperatures added;\nv0.4: Major hotfix to a groundmodel related bug, which ruined v0.2 and v0.3;\nv0.3: 3 ring temperature system, treaded tyre support and overall improvement to behaviour.\nv0.2: Improved overall feel of the system and fixed most issues with overheating on slippery surfaces.\nv0.1: Alpha\/experimental version uploaded.",
+    "message": "A continuation of the lovely mod by Luuk. It completely reworks thermal and wear characteristics and resultant grip using some simulation and real world data. It also adds brake cooling ducts which are saved to vehicle configurations, tyre popping at very low condition, heat transfer across the surface of the tyre and probably a few more things.\n[HR][\/HR]\n\nDevelopment Update Oct 5th 2024:\nThose who have been following development will have noticed that the mod hasn't been updated in a while. This is because a new thermals and wear mod is in the works, written from scratch, but I've unfortunately ran into many issues due to lack to domain knowledge surrounding tyre behavior and this new mod falls short in similar ways to the current version.\n\nI have read as much as I can around the topic (scientific papers, articles, forums etc.) but there is too little publicly accessible educational material to give the mod the accuracy I want for it.\n\nMy degree-level mechanical engineering experience has only taken development so far. If any engineers are interested in contributing and have knowledge or resources in automotive tyre mechanics, I invite you to reach out so we can discuss it.\n\n[HR][\/HR]\n\nSee below for the original mod description from Luuk\n[URL]https:\/\/www.beamng.com\/resources\/luuks-tyre-thermals-and-wear-mod.26947\/[\/URL]\n[HR][\/HR]\n\nDiscussion thread:\n[URL]https:\/\/www.beamng.com\/threads\/tyre-wear-and-thermals-mod-discussion.97035\/[\/URL]\n\nNew tyre popping! (The full clip is a bit over a minute) from v0.15\n[MEDIA=vimeo]915152516[\/MEDIA]\n\nHeat buildup from drifting from v0.15\n[IMG]https:\/\/i.imgur.com\/mAOqj95.png[\/IMG]\n\nThese two pics below show the difference in heat build up from weight transfer and camber from 0.16\n[IMG]https:\/\/i.imgur.com\/7z4XHHQ.png[\/IMG]\n[IMG]https:\/\/i.imgur.com\/sWyK75o.png[\/IMG]\n\nUI:\nThe pairs of red triangles on each wheel display where the peak of the load on the tyre is. Note this isn't exactly the same as wheel camber, as the tyre deforms, but should be used as a rough guide as to where most of the heat will be generated on the tyre.\n\nShowcase video for v0.17 from BriNgeR & \u0430\u0439\u0444\u0438\u043b\u0433\u0443\u0434 (ifeelkayf) from BeamNG Motorsports discord\n[MEDIA=youtube]FZBqAEAm0gg[\/MEDIA]\n\n\nMod features:\n- Multiplayer compatible;\n- Tyre thermals based on several factors (tyre slip, load & camber, brake temperature);\n- Tyre wear based on similar factors, and the tyre thermals;\n- 4 temperature zones (inner, center, outer and core);\n- Brake cooling sliders in tuning settings for all vehicles;\n- Dynamic tyre grip based on thermals and wear;\n- Support for various compounds (standards, sports and race tyres);\n\nPlanned features:\n- Various user settings for brake duct cooling, preheating tyres etc. so you can drive how you want to (it's a sandbox game after all)\n- Existing tuning settings like tyre pressure, torque split etc will have an intuitive and meaningful impact on tyre temps and wear\n- Rebalanced condition degradation and heating to make sense for non-track driving\n\nKnown issues:\n- Some drivetrain configurations (i.e. FWD) cause excessive heat build up in the driven wheels. This will be fixed with a brake duct update (fixed, should be more manageable)\n\nThe future of the mod:\nWhile this mod is currently focused around racing and hotlapping (as that's my favourite part of the game), I understand that it's not the only thing to do in BeamNG. This means that once I'm generally satisfied with how the mod feels on the track, I'll focus on areas like rallying, off-road and city driving.\n\nContributors:\n- Cyborella: A huge source of inspiration, sim-data and advice for increasing realism\n- \u2b50[USER=53119]@lucky4luuk[\/USER]: The original mod author\n- [USER=531843]@Redknee[\/USER]: Helped get Luuk and running with the UI, providing concept art and valuable feedback!\n\nChangelog:\nv0.18.2: Tyres will no longer overlap on the UI. However, some wheels will appear in the incorrect position. A more complex but reliable system is in the works\nv0.18.1: Tyres will no longer be dead after about 80% condition due to new wear vs grip curve taken from real data. They will be usable for much longer\nv0.18:\n- Brake cooling sliders for every vehicle, found within the vehicles tuning settings to influence how hot\/cold the brakes get and, as a result, how hot\/cold the tyres get. These are also saved in the .pc vehicle configuration file so the settings are saved in configs and can be shared with others.\n- Thermals rework with big help from Cyborella!\n- Increased wear rate again\n\nv0.17: Extreme temps made more brutal for grip, wear rate lowered significantly, lateral Gs now generate temperature better\nv0.16: Thermals rework, tyre heat should be much more dynamic. Significantly increased accuracy of camber detection\nv0.15: Rebalanced heat accumulation and street tyre's grip due to temp. also only race tyres start preheated\nv0.14: New versioning system, tyre popping and thermals rework due to tyre slipping. Heat also builds more evenly across a tyre instead of building up in the center ring;\n\nDonations:\nCompletely optional, my mods will always be free, but it does help with motivation\n[URL]https:\/\/ko-fi.com\/amplesamples[\/URL]\n\nSource code:\n[URL]https:\/\/github.com\/ample-samples\/tyre-thermals-and-wear[\/URL]\nFeel free to download the preview version to play on your own machine",
     "category_title": "",
     "prefix_title": "Alpha",
-    "via": "packed by repo on Wed, 21 Feb 2024 23:01:37 GMT",
+    "via": "packed by repo on Mon, 27 Jan 2025 02:08:28 GMT",
     "hashes": [
         [
             "scripts\/LuuksTyreThermalsAndWear\/modScript.lua",
-            "dc0078a9b8d9ff98"
+            "3beac66e1a50f1d7"
         ],
         [
             "lua\/vehicle\/extensions\/auto\/LuuksTyreThermalsAndWear.lua",
-            "33f5642fdad8f43d"
+            "b99f2c65c634bf8d"
         ],
         [
-            "lua\/.luarc.json",
-            "d5eb0063f20d912f"
+            "lua\/vehicle\/extensions\/tyre_utils.lua",
+            "2bb11c382e6a5887"
+        ],
+        [
+            "lua\/vehicle\/extensions\/tyreData.lua",
+            "7a00a7f33badc8ad"
+        ],
+        [
+            "lua\/common\/extensions\/thermals_wear_utils.lua",
+            "faffde383bf1eadc"
+        ],
+        [
+            "lua\/common\/extensions\/htmlTools.lua",
+            "07bf653f4de9cd4e"
+        ],
+        [
+            "lua\/ge\/extensions\/CreateBrakeDuctSliders.lua",
+            "02cc67d39097e6a1"
         ],
         [
             "lua\/ge\/extensions\/LuuksTyreThermalsAndWear.lua",
-            "c5439eb277acebfd"
+            "46da8c2941dbef1e"
         ],
         [
             "ui\/modules\/apps\/TyreWearThermals\/app.js",
-            "80d9c2daa1f29eae"
+            "b8d9f194ae23253f"
         ],
         [
             "ui\/modules\/apps\/TyreWearThermals\/app.png",
@@ -51,7 +67,15 @@
         ],
         [
             "ui\/modules\/apps\/TyreWearThermals\/app.json",
-            "3dfebcbd93e83d56"
+            "ef8bb10175cfab39"
+        ],
+        [
+            "README.md",
+            "523e1cb35ae2ac9f"
+        ],
+        [
+            "LICENSE",
+            "94480190c088bc67"
         ]
     ]
 }

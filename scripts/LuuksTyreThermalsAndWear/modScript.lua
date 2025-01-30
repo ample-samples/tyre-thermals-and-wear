@@ -1,2 +1,2 @@
-setExtensionUnloadMode("CreateBrakeDuctSliders", "manual")
 setExtensionUnloadMode("luukstyrethermalsandwear", "manual")
+setExtensionUnloadMode("CreateBrakeDuctSliders", "manual")
