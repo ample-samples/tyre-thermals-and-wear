@@ -139,7 +139,7 @@ angular.module("beamng.apps")
                             ctx.beginPath();
                             ctx.rect(x + sectionXOffset, y + 1, sectionWidth, h - 2);
                             ctx.fill();
-                            if (condition > 30) {
+                            if (condition > 1) {
                                 var ft = 1.0 - (condition / 100);
                                 ctx.fillStyle = "hsla(" + hue + ",82%,56%,1)";
                                 ctx.beginPath();
@@ -172,7 +172,7 @@ angular.module("beamng.apps")
                         }
 
                         // Draw core temp
-                        var coreTempT = 1.0 - Math.min(Math.max(temps[3] / working_temp - 0.5, 0), 1);
+                        var coreTempT = 1.0 - Math.min(Math.max(temps[6] / working_temp - 0.5, 0), 1);
                         var coreHue = lowHue + (highHue - lowHue) * coreTempT;
                         if (t < 0.1) {
                             coreTempIsDisplayed = 0;
