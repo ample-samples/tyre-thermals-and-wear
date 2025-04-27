@@ -1,2 +1,2 @@
 setExtensionUnloadMode("luukstyrethermalsandwear", "manual")
-setExtensionUnloadMode("CreateBrakeDuctSliders", "manual")
+setExtensionUnloadMode("CreateTuningSettings", "manual")

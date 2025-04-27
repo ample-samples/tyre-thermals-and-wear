@@ -5,8 +5,10 @@ local M = {}
 local variablesById = {}
 
 local brakeSetting = {}
+local loadSensitivityModifier = nil
 local function onVehicleSpawned(vehID)
 	brakeSetting = {}
+    loadSensitivityModifier = nil
 	local vehicleData = core_vehicle_manager.getVehicleData(vehID)
 	if not vehicleData then return end
 	local vdata = vehicleData.vdata
@@ -21,6 +23,9 @@ local function onVehicleSpawned(vehID)
 	if tablePartConfig and tablePartConfig.vars and tablePartConfig.vars["$WheelCoolingDuctRear"] then
 		brakeSetting[2] = tablePartConfig.vars["$WheelCoolingDuctRear"]
 	end
+	if tablePartConfig and tablePartConfig.vars and tablePartConfig.vars["$LoadSensitivityModifier"] then
+		loadSensitivityModifier = tablePartConfig.vars["$LoadSensitivityModifier"]
+	end
 
 	-- if brakeSetting ~= nil then
 	-- 	brakeSetting = v.data.variables["$WheelCoolingDuct"].val
@@ -28,6 +33,24 @@ local function onVehicleSpawned(vehID)
 
 	if not variablesById[vehID] then
 		variablesById[vehID] = {
+			["$LoadSensitivityModifier"] = {
+				name = "$LoadSensitivityModifier",
+				category = "Wheels",
+				subCategory = "All",
+				title = "Downforce Sensitivity Modifier",
+				description = "The tyre's sensitivity to loads. Should be set lower for high downforce setups",
+				type = "range",
+				unit = "%",
+
+				min = 1,
+				minDis = 1,
+				max = 100,
+				maxDis = 100,
+				step = 1,
+				stepDis = 1,
+				default = 95,
+				val = loadSensitivityModifier or 95
+			},
 			["$WheelCoolingDuctFront"] = {
 				name = "$WheelCoolingDuctFront",
 				category = "Brakes",
@@ -66,6 +89,11 @@ local function onVehicleSpawned(vehID)
 	else
 		variablesById[vehID]["$WheelCoolingDuctFront"].val = brakeSetting[1] or 12
 		variablesById[vehID]["$WheelCoolingDuctRear"].val = brakeSetting[2] or 12
+        if loadSensitivityModifier == nil then
+            variablesById[vehID]["$LoadSensitivityModifier"].val = 95
+        else
+            variablesById[vehID]["$LoadSensitivityModifier"].val = loadSensitivityModifier
+        end
 	end
 
 	tableMerge(vdata.variables, variablesById[vehID])
@@ -92,8 +120,10 @@ local function onSettingsChanged()
 	if not be then return end
 	if not core_vehicle_manager.getPlayerVehicleData() then return end
 	brakeSetting = {}
-	local mailboxSend = {core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuctFront"].val or 12, core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuctRear"].val or 12}
-	be:sendToMailbox("tyreWearMailboxDuct", serialize(mailboxSend))
+	local mailboxSendBrakeSetting = {core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuctFront"].val or 12, core_vehicle_manager.getPlayerVehicleData().vdata.variables["$WheelCoolingDuctRear"].val or 12}
+	be:sendToMailbox("tyreWearMailboxDuct", serialize(mailboxSendBrakeSetting))
+	local mailboxSendLoadSensitivity = core_vehicle_manager.getPlayerVehicleData().vdata.variables["$LoadSensitivityModifier"].val or 95
+	be:sendToMailbox("tyreWearMailboxLoadSensitivity", tonumber(mailboxSendLoadSensitivity))
 	-- dump(core_environment.getTemperatureK() .. " K")
 	local env_temp = tonumber(core_environment.getTemperatureK()) - 273.15
 	be:sendToMailbox("tyreWearMailboxEnvTemp", env_temp)
@@ -102,6 +132,7 @@ end
 local function onVehicleDestroyed(vehID)
 	variablesById[vehID] = nil
 	brakeSetting = {}
+    loadSensitivityModifier = nil
 end
 
 M.onSettingsChanged = onSettingsChanged
