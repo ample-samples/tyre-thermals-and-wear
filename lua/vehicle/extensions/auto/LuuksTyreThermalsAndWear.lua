@@ -151,9 +151,6 @@ local function CalcTyreWear(dt, wheelID, groundModel, loadBias, treadCoef, slipE
         data.temp[i+3] = data.temp[i+3] + (data.temp[i] - data.temp[i+3] - carcassTempDiffCore) * TEMP_SKIN_TO_CARCASS * dt
         -- data.temp[i+3] = data.temp[i+3] + 0.03
         data.temp[i] = data.temp[i] + (data.temp[i+3] - data.temp[i]) * TEMP_SKIN_TO_CARCASS * dt
-        dump(data.temp)
-
-        
 
         local loadCoeffIndividual = weights[i] * load
         local tempDist = math.abs(data.temp[i] - data.working_temp)
