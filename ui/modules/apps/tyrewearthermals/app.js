@@ -16,6 +16,7 @@ angular.module("beamng.apps")
                     c.height = data.height
                 });
                 scope.$on("streamsUpdate", function (event, streams) {
+                    if (!streams.TyreWearThermals) return;
                     // From: https://stackoverflow.com/a/3368118
                     var wheelCount = streams.TyreWearThermals.data.length;
                     function roundRect(
@@ -121,6 +122,8 @@ angular.module("beamng.apps")
                         var highHue = 248;
 
                         for (let i = 0; i < 3; i++) {
+                            var tempT = 1.0 - Math.min(Math.max(temps[i] / working_temp - 0.5, 0), 1);
+                            var hue = lowHue + (highHue - lowHue) * tempT;
 
                             var crad = 8.0;
                             var radius = { tl: 0, tr: 0, br: 0, bl: 0 };
@@ -137,24 +140,11 @@ angular.module("beamng.apps")
                             ctx.beginPath();
                             ctx.rect(x + sectionXOffset, y + 1, sectionWidth, h - 2);
                             ctx.fill();
-                            // Draw temps and condition if tyre is not worn completely
                             if (condition > 1) {
-                                // Skin
-                                const tempTSkin = 1.0 - Math.min(Math.max(temps[i] / working_temp - 0.5, 0), 1);
-                                const hueSkin = lowHue + (highHue - lowHue) * tempTSkin;
-                                const ftSkin = 1.0 - (condition / 100);
-                                ctx.fillStyle = "hsla(" + hueSkin + ",82%,56%,1)";
+                                var ft = 1.0 - (condition / 100);
+                                ctx.fillStyle = "hsla(" + hue + ",82%,56%,1)";
                                 ctx.beginPath();
-                                ctx.rect(x + sectionXOffset, y + h * ftSkin + 1, sectionWidth, h - h * ftSkin - 2);
-                                ctx.fill();
-
-                                // Carcass
-                                const tempTCarcass = 1.0 - Math.min(Math.max((temps[i+3]) / working_temp - 0.5, 0), 1);
-                                const hueCarcass = lowHue + (highHue - lowHue) * tempTCarcass;
-                                const ftCarcass = (1.0 - (condition / 100)) / 2;
-                                ctx.fillStyle = "hsla(" + hueCarcass + ",82%,56%,1)";
-                                ctx.beginPath();
-                                ctx.rect(x + sectionXOffset, y + h / 2 * ftCarcass, sectionWidth, h /2 - h * ftCarcass);
+                                ctx.rect(x + sectionXOffset, y + h * ft + 1, sectionWidth, h - h * ft - 2);
                                 ctx.fill();
                             }
                             ctx.lineWidth = "3";
@@ -165,7 +155,7 @@ angular.module("beamng.apps")
                             ctx.fillStyle = "#ffffffff";
                             var font_size = Math.max(Math.min(w / 20.0 * 3.0, 16.0), 4.0);
                             ctx.font = 'bold ' + font_size + 'pt "Lucida Console", Monaco, monospace';
-                            ctx.fillText("" + Math.floor(temps[i+3]), x + (w / 3.0 * i) + 2 + (w / 3.0 - 8) / 2.0, y + h + 22);
+                            ctx.fillText("" + Math.floor(temps[i]), x + (w / 3.0 * i) + 2 + (w / 3.0 - 8) / 2.0, y + h + 22);
 
                             // camber
                             ctx.fillStyle = "rgba(255,50,50,0.85)";
@@ -183,7 +173,7 @@ angular.module("beamng.apps")
                         }
 
                         // Draw core temp
-                        var coreTempT = 1.0 - Math.min(Math.max(temps[6] / working_temp - 0.5, 0), 1);
+                        var coreTempT = 1.0 - Math.min(Math.max(temps[3] / working_temp - 0.5, 0), 1);
                         var coreHue = lowHue + (highHue - lowHue) * coreTempT;
                         if (t < 0.1) {
                             coreTempIsDisplayed = 0;
